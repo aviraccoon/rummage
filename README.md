@@ -77,12 +77,17 @@ Works out of the box with examples.
 ```
 rummage/
 ├── examples/            # Sample data (works out of the box)
-│   ├── raw/             # Bank exports (fio/, revolut/, etc.)
-│   ├── rules.ts         # Categorization patterns
-│   ├── categories.ts    # Category hierarchy
+│   ├── raw/             # Bank exports
+│   │   ├── fio/         # Fio banka exports
+│   │   ├── revolut/     # Revolut exports
+│   │   ├── ofx/         # Generic OFX files
+│   │   └── manual/      # Manual entries
+│   ├── generated/       # Output (main.beancount)
 │   ├── accounts.ts      # Account definitions
+│   ├── categories.ts    # Category hierarchy
+│   ├── locations.ts     # Payee locations
 │   ├── overrides.ts     # Transaction corrections
-│   └── manual/          # Manual entries (balances, transactions)
+│   └── rules.ts         # Categorization patterns
 ├── data/                # Your real data (gitignored, same structure)
 ├── src/                 # Source code
 └── scripts/             # Custom reports
