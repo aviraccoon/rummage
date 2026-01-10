@@ -1,0 +1,26 @@
+# Private data (your real finances, including data/generated/)
+data/
+
+# Dependencies
+node_modules/
+
+# Test coverage
+coverage/
+
+# Environment
+.env
+.env.local
+mise.local.toml
+.direnv/
+
+# OS
+.DS_Store
+
+# Editor
+*.swp
+.idea/
+.vscode/
+tmp/
+
+# LLM local settings
+.claude/settings.local.json

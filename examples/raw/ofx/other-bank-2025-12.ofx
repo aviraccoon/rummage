@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<?OFX OFXHEADER="200" VERSION="211" SECURITY="NONE" OLDFILEUID="NONE" NEWFILEUID="NONE"?>
+
+<OFX>
+  <BANKMSGSRSV1>
+    <STMTTRNRS>
+      <TRNUID>generic-example-uuid</TRNUID>
+      <STATUS>
+        <CODE>0</CODE>
+        <SEVERITY>INFO</SEVERITY>
+      </STATUS>
+      <STMTRS>
+        <CURDEF>EUR</CURDEF>
+        <BANKACCTFROM>
+          <BANKID>9999</BANKID>
+          <ACCTID>EU12345678</ACCTID>
+          <ACCTTYPE>CHECKING</ACCTTYPE>
+        </BANKACCTFROM>
+        <BANKTRANLIST>
+          <DTSTART>20251201000000.000[+01.00:CET]</DTSTART>
+          <DTEND>20251231000000.000[+01.00:CET]</DTEND>
+          <STMTTRN>
+            <TRNTYPE>CREDIT</TRNTYPE>
+            <DTPOSTED>20251205000000.000[+01.00:CET]</DTPOSTED>
+            <TRNAMT>1500.0000</TRNAMT>
+            <FITID>EUR001</FITID>
+            <NAME>Wire Transfer</NAME>
+            <MEMO>Payment from client</MEMO>
+          </STMTTRN>
+          <STMTTRN>
+            <TRNTYPE>DEBIT</TRNTYPE>
+            <DTPOSTED>20251210000000.000[+01.00:CET]</DTPOSTED>
+            <TRNAMT>-45.99</TRNAMT>
+            <FITID>EUR002</FITID>
+            <NAME>Card Payment</NAME>
+            <MEMO>AMAZON EU SARL</MEMO>
+          </STMTTRN>
+          <STMTTRN>
+            <TRNTYPE>DEBIT</TRNTYPE>
+            <DTPOSTED>20251215000000.000[+01.00:CET]</DTPOSTED>
+            <TRNAMT>-12.99</TRNAMT>
+            <FITID>EUR003</FITID>
+            <NAME>Card Payment</NAME>
+            <MEMO>NETFLIX.COM</MEMO>
+          </STMTTRN>
+        </BANKTRANLIST>
+      </STMTRS>
+    </STMTTRNRS>
+  </BANKMSGSRSV1>
+</OFX>

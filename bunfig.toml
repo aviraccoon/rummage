@@ -1,0 +1,5 @@
+[test]
+coverage = true
+coverageDir = "coverage"
+coverageSkipTestFiles = true
+coveragePathIgnorePatterns = ["**/rummage-test-*/**"]

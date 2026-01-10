@@ -1,0 +1,20 @@
+{
+	"name": "rummage",
+	"version": "0.1.0",
+	"type": "module",
+	"scripts": {
+		"init": "bun run scripts/init.ts",
+		"build": "bun run src/build.ts",
+		"test": "bun test",
+		"check": "bun run typecheck && bun run lint && bun test",
+		"lint": "biome check .",
+		"lint:fix": "biome check --write .",
+		"typecheck": "tsc --noEmit"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "^2.3.11",
+		"@types/bun": "latest",
+		"typescript": "^5.0.0"
+	},
+	"dependencies": {}
+}

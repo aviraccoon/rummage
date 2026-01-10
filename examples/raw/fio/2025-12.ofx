@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<?OFX OFXHEADER="200" VERSION="211" SECURITY="NONE" OLDFILEUID="NONE" NEWFILEUID="NONE"?>
+
+<OFX>
+  <BANKMSGSRSV1>
+    <STMTTRNRS>
+      <TRNUID>example-uuid-1234</TRNUID>
+      <STATUS>
+        <CODE>0</CODE>
+        <SEVERITY>INFO</SEVERITY>
+      </STATUS>
+      <STMTRS>
+        <CURDEF>CZK</CURDEF>
+        <BANKACCTFROM>
+          <BANKID>2010</BANKID>
+          <ACCTID>1234567890</ACCTID>
+          <ACCTTYPE>CHECKING</ACCTTYPE>
+        </BANKACCTFROM>
+        <BANKTRANLIST>
+          <DTSTART>20251201000000.000[+01.00:CET]</DTSTART>
+          <DTEND>20251231000000.000[+01.00:CET]</DTEND>
+          <STMTTRN>
+            <TRNTYPE>CREDIT</TRNTYPE>
+            <DTPOSTED>20251201000000.000[+01.00:CET]</DTPOSTED>
+            <TRNAMT>50000.0000</TRNAMT>
+            <FITID>10001</FITID>
+            <NAME>Bezhotovostni prijem</NAME>
+            <MEMO>Salary December</MEMO>
+          </STMTTRN>
+          <STMTTRN>
+            <TRNTYPE>DEBIT</TRNTYPE>
+            <DTPOSTED>20251205000000.000[+01.00:CET]</DTPOSTED>
+            <TRNAMT>-15000.0000</TRNAMT>
+            <FITID>10002</FITID>
+            <NAME>Bezhotovostni platba</NAME>
+            <MEMO>Rent payment</MEMO>
+          </STMTTRN>
+          <STMTTRN>
+            <TRNTYPE>POS</TRNTYPE>
+            <DTPOSTED>20251207000000.000[+01.00:CET]</DTPOSTED>
+            <TRNAMT>-350.0000</TRNAMT>
+            <FITID>10003</FITID>
+            <NAME>Platba kartou</NAME>
+            <MEMO>Nakup: ALBERT HYPERMARKET, Prague, CZ, dne 7.12.2025, castka 350.00 CZK</MEMO>
+          </STMTTRN>
+          <STMTTRN>
+            <TRNTYPE>POS</TRNTYPE>
+            <DTPOSTED>20251210000000.000[+01.00:CET]</DTPOSTED>
+            <TRNAMT>-199.0000</TRNAMT>
+            <FITID>10004</FITID>
+            <NAME>Platba kartou</NAME>
+            <MEMO>Nakup: SPOTIFY, Stockholm, SE, dne 10.12.2025, castka 199.00 CZK</MEMO>
+          </STMTTRN>
+          <STMTTRN>
+            <TRNTYPE>POS</TRNTYPE>
+            <DTPOSTED>20251212000000.000[+01.00:CET]</DTPOSTED>
+            <TRNAMT>-450.0000</TRNAMT>
+            <FITID>10005</FITID>
+            <NAME>Platba kartou</NAME>
+            <MEMO>Nakup: BOLT FOOD, Prague, CZ, dne 12.12.2025, castka 450.00 CZK</MEMO>
+          </STMTTRN>
+          <STMTTRN>
+            <TRNTYPE>POS</TRNTYPE>
+            <DTPOSTED>20251215000000.000[+01.00:CET]</DTPOSTED>
+            <TRNAMT>-85.0000</TRNAMT>
+            <FITID>10006</FITID>
+            <NAME>Platba kartou</NAME>
+            <MEMO>Nakup: STARBUCKS COFFEE, Prague, CZ, dne 15.12.2025, castka 85.00 CZK</MEMO>
+          </STMTTRN>
+          <STMTTRN>
+            <TRNTYPE>XFER</TRNTYPE>
+            <DTPOSTED>20251218000000.000[+01.00:CET]</DTPOSTED>
+            <TRNAMT>-5000.0000</TRNAMT>
+            <FITID>10007</FITID>
+            <NAME>Platba prevodem uvnitr banky</NAME>
+            <BANKACCTTO>
+              <BANKID>2010</BANKID>
+              <ACCTID>9876543210</ACCTID>
+              <ACCTTYPE>SAVINGS</ACCTTYPE>
+            </BANKACCTTO>
+            <MEMO>Savings transfer</MEMO>
+          </STMTTRN>
+          <STMTTRN>
+            <TRNTYPE>POS</TRNTYPE>
+            <DTPOSTED>20251220000000.000[+01.00:CET]</DTPOSTED>
+            <TRNAMT>-1200.0000</TRNAMT>
+            <FITID>10008</FITID>
+            <NAME>Platba kartou</NAME>
+            <MEMO>Nakup: ROHLIK.CZ, Prague, CZ, dne 20.12.2025, castka 1200.00 CZK</MEMO>
+          </STMTTRN>
+          <STMTTRN>
+            <TRNTYPE>FEE</TRNTYPE>
+            <DTPOSTED>20251231000000.000[+01.00:CET]</DTPOSTED>
+            <TRNAMT>-30.0000</TRNAMT>
+            <FITID>10009</FITID>
+            <NAME>Poplatek - platebni karta</NAME>
+          </STMTTRN>
+        </BANKTRANLIST>
+      </STMTRS>
+    </STMTTRNRS>
+  </BANKMSGSRSV1>
+</OFX>

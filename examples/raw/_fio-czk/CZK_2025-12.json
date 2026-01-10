@@ -1,0 +1,190 @@
+{
+	"accountStatement": {
+		"info": {
+			"accountId": "1234567890",
+			"bankId": "2010",
+			"currency": "CZK",
+			"iban": "CZ0920100000001234567890",
+			"bic": "FIOBCZPPXXX",
+			"openingBalance": 45000.0,
+			"closingBalance": 28500.0,
+			"dateStart": "2025-12-01+0100",
+			"dateEnd": "2025-12-31+0100",
+			"yearList": null,
+			"idList": null,
+			"idFrom": 20001,
+			"idTo": 20005,
+			"idLastDownload": null
+		},
+		"transactionList": {
+			"transaction": [
+				{
+					"column22": { "value": 20001, "name": "ID pohybu", "id": 22 },
+					"column0": { "value": "2025-12-01+0100", "name": "Datum", "id": 0 },
+					"column1": { "value": 55000, "name": "Objem", "id": 1 },
+					"column14": { "value": "CZK", "name": "Měna", "id": 14 },
+					"column2": { "value": "123456789", "name": "Protiúčet", "id": 2 },
+					"column10": {
+						"value": "ACME Corp s.r.o.",
+						"name": "Název protiúčtu",
+						"id": 10
+					},
+					"column3": { "value": "0800", "name": "Kód banky", "id": 3 },
+					"column12": {
+						"value": "Česká spořitelna",
+						"name": "Název banky",
+						"id": 12
+					},
+					"column4": null,
+					"column5": { "value": "2025120001", "name": "VS", "id": 5 },
+					"column6": null,
+					"column7": {
+						"value": "Faktura 2025-12-001",
+						"name": "Uživatelská identifikace",
+						"id": 7
+					},
+					"column16": null,
+					"column8": {
+						"value": "Bezhotovostní příjem",
+						"name": "Typ",
+						"id": 8
+					},
+					"column9": null,
+					"column18": null,
+					"column25": {
+						"value": "Payment for services",
+						"name": "Komentář",
+						"id": 25
+					},
+					"column26": null,
+					"column17": { "value": 30001, "name": "ID pokynu", "id": 17 },
+					"column27": null
+				},
+				{
+					"column22": { "value": 20002, "name": "ID pohybu", "id": 22 },
+					"column0": { "value": "2025-12-05+0100", "name": "Datum", "id": 0 },
+					"column1": { "value": -15000, "name": "Objem", "id": 1 },
+					"column14": { "value": "CZK", "name": "Měna", "id": 14 },
+					"column2": { "value": "987654321", "name": "Protiúčet", "id": 2 },
+					"column10": {
+						"value": "Landlord Reality",
+						"name": "Název protiúčtu",
+						"id": 10
+					},
+					"column3": { "value": "0100", "name": "Kód banky", "id": 3 },
+					"column12": {
+						"value": "Komerční banka",
+						"name": "Název banky",
+						"id": 12
+					},
+					"column4": null,
+					"column5": { "value": "1234", "name": "VS", "id": 5 },
+					"column6": null,
+					"column7": {
+						"value": "Rent December 2025",
+						"name": "Uživatelská identifikace",
+						"id": 7
+					},
+					"column16": null,
+					"column8": {
+						"value": "Bezhotovostní platba",
+						"name": "Typ",
+						"id": 8
+					},
+					"column9": null,
+					"column18": null,
+					"column25": null,
+					"column26": null,
+					"column17": { "value": 30002, "name": "ID pokynu", "id": 17 },
+					"column27": null
+				},
+				{
+					"column22": { "value": 20003, "name": "ID pohybu", "id": 22 },
+					"column0": { "value": "2025-12-10+0100", "name": "Datum", "id": 0 },
+					"column1": { "value": -199, "name": "Objem", "id": 1 },
+					"column14": { "value": "CZK", "name": "Měna", "id": 14 },
+					"column2": null,
+					"column10": null,
+					"column3": null,
+					"column12": null,
+					"column4": null,
+					"column5": null,
+					"column6": null,
+					"column7": null,
+					"column16": {
+						"value": "SPOTIFY AB",
+						"name": "Zpráva pro příjemce",
+						"id": 16
+					},
+					"column8": { "value": "Platba kartou", "name": "Typ", "id": 8 },
+					"column9": null,
+					"column18": {
+						"value": "Nakup: SPOTIFY, Stockholm, SE",
+						"name": "Upřesnění",
+						"id": 18
+					},
+					"column25": null,
+					"column26": null,
+					"column17": null,
+					"column27": null
+				},
+				{
+					"column22": { "value": 20004, "name": "ID pohybu", "id": 22 },
+					"column0": { "value": "2025-12-15+0100", "name": "Datum", "id": 0 },
+					"column1": { "value": -850, "name": "Objem", "id": 1 },
+					"column14": { "value": "CZK", "name": "Měna", "id": 14 },
+					"column2": null,
+					"column10": null,
+					"column3": null,
+					"column12": null,
+					"column4": null,
+					"column5": null,
+					"column6": null,
+					"column7": null,
+					"column16": {
+						"value": "ALBERT HYPERMARKET",
+						"name": "Zpráva pro příjemce",
+						"id": 16
+					},
+					"column8": { "value": "Platba kartou", "name": "Typ", "id": 8 },
+					"column9": null,
+					"column18": {
+						"value": "Nakup: ALBERT, Prague, CZ",
+						"name": "Upřesnění",
+						"id": 18
+					},
+					"column25": null,
+					"column26": null,
+					"column17": null,
+					"column27": null
+				},
+				{
+					"column22": { "value": 20005, "name": "ID pohybu", "id": 22 },
+					"column0": { "value": "2025-12-31+0100", "name": "Datum", "id": 0 },
+					"column1": { "value": -30, "name": "Objem", "id": 1 },
+					"column14": { "value": "CZK", "name": "Měna", "id": 14 },
+					"column2": null,
+					"column10": null,
+					"column3": null,
+					"column12": null,
+					"column4": null,
+					"column5": null,
+					"column6": null,
+					"column7": {
+						"value": "Poplatek - platební karta",
+						"name": "Uživatelská identifikace",
+						"id": 7
+					},
+					"column16": null,
+					"column8": { "value": "Poplatek", "name": "Typ", "id": 8 },
+					"column9": null,
+					"column18": null,
+					"column25": null,
+					"column26": null,
+					"column17": null,
+					"column27": null
+				}
+			]
+		}
+	}
+}

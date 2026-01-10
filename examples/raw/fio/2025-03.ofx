@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<?OFX OFXHEADER="200" VERSION="211" SECURITY="NONE" OLDFILEUID="NONE" NEWFILEUID="NONE"?>
+
+<OFX>
+  <BANKMSGSRSV1>
+    <STMTTRNRS>
+      <STMTRS>
+        <CURDEF>CZK</CURDEF>
+        <BANKACCTFROM>
+          <BANKID>2010</BANKID>
+          <ACCTID>1234567890</ACCTID>
+          <ACCTTYPE>CHECKING</ACCTTYPE>
+        </BANKACCTFROM>
+        <BANKTRANLIST>
+          <DTSTART>20250301000000.000[+01.00:CET]</DTSTART>
+          <DTEND>20250331000000.000[+01.00:CET]</DTEND>
+          <STMTTRN>
+            <TRNTYPE>CREDIT</TRNTYPE>
+            <DTPOSTED>20250301000000.000[+01.00:CET]</DTPOSTED>
+            <TRNAMT>50000.00</TRNAMT>
+            <FITID>30001</FITID>
+            <NAME>Bezhotovostni prijem</NAME>
+            <MEMO>Salary March</MEMO>
+          </STMTTRN>
+          <STMTTRN>
+            <TRNTYPE>DEBIT</TRNTYPE>
+            <DTPOSTED>20250305000000.000[+01.00:CET]</DTPOSTED>
+            <TRNAMT>-15000.00</TRNAMT>
+            <FITID>30002</FITID>
+            <NAME>Bezhotovostni platba</NAME>
+            <MEMO>Rent payment</MEMO>
+          </STMTTRN>
+          <STMTTRN>
+            <TRNTYPE>POS</TRNTYPE>
+            <DTPOSTED>20250311000000.000[+01.00:CET]</DTPOSTED>
+            <TRNAMT>-2515.00</TRNAMT>
+            <FITID>30003</FITID>
+            <NAME>Platba kartou</NAME>
+            <MEMO>Nakup: DISCORD* NITROYEARLY, DISCORD.COM, US, dne 11.3.2025, castka 99.99 EUR</MEMO>
+          </STMTTRN>
+          <STMTTRN>
+            <TRNTYPE>POS</TRNTYPE>
+            <DTPOSTED>20250312000000.000[+01.00:CET]</DTPOSTED>
+            <TRNAMT>-450.00</TRNAMT>
+            <FITID>30004</FITID>
+            <NAME>Platba kartou</NAME>
+            <MEMO>Nakup: BOLT FOOD, Prague, CZ, dne 12.3.2025, castka 450.00 CZK</MEMO>
+          </STMTTRN>
+          <STMTTRN>
+            <TRNTYPE>POS</TRNTYPE>
+            <DTPOSTED>20250315000000.000[+01.00:CET]</DTPOSTED>
+            <TRNAMT>-199.00</TRNAMT>
+            <FITID>30005</FITID>
+            <NAME>Platba kartou</NAME>
+            <MEMO>Nakup: SPOTIFY, Stockholm, SE, dne 15.3.2025, castka 199.00 CZK</MEMO>
+          </STMTTRN>
+          <STMTTRN>
+            <TRNTYPE>POS</TRNTYPE>
+            <DTPOSTED>20250318000000.000[+01.00:CET]</DTPOSTED>
+            <TRNAMT>-1250.00</TRNAMT>
+            <FITID>30006</FITID>
+            <NAME>Platba kartou</NAME>
+            <MEMO>Nakup: LIDL, Prague, CZ, dne 18.3.2025, castka 1250.00 CZK</MEMO>
+          </STMTTRN>
+          <STMTTRN>
+            <TRNTYPE>POS</TRNTYPE>
+            <DTPOSTED>20250320000000.000[+01.00:CET]</DTPOSTED>
+            <TRNAMT>-329.00</TRNAMT>
+            <FITID>30007</FITID>
+            <NAME>Platba kartou</NAME>
+            <MEMO>Nakup: NETFLIX.COM, US, dne 20.3.2025, castka 12.99 EUR</MEMO>
+          </STMTTRN>
+          <STMTTRN>
+            <TRNTYPE>POS</TRNTYPE>
+            <DTPOSTED>20250322000000.000[+01.00:CET]</DTPOSTED>
+            <TRNAMT>-1500.00</TRNAMT>
+            <FITID>30008</FITID>
+            <NAME>Platba kartou</NAME>
+            <MEMO>Nakup: STEAM PURCHASE, Valve, US, dne 22.3.2025, castka 59.99 EUR</MEMO>
+          </STMTTRN>
+          <STMTTRN>
+            <TRNTYPE>POS</TRNTYPE>
+            <DTPOSTED>20250325000000.000[+01.00:CET]</DTPOSTED>
+            <TRNAMT>-420.00</TRNAMT>
+            <FITID>30009</FITID>
+            <NAME>Platba kartou</NAME>
+            <MEMO>Nakup: DODO PIZZA, Prague, CZ, dne 25.3.2025, castka 420.00 CZK</MEMO>
+          </STMTTRN>
+          <STMTTRN>
+            <TRNTYPE>POS</TRNTYPE>
+            <DTPOSTED>20250328000000.000[+01.00:CET]</DTPOSTED>
+            <TRNAMT>-85.00</TRNAMT>
+            <FITID>30010</FITID>
+            <NAME>Platba kartou</NAME>
+            <MEMO>Nakup: COSTA COFFEE, Prague, CZ, dne 28.3.2025, castka 85.00 CZK</MEMO>
+          </STMTTRN>
+          <STMTTRN>
+            <TRNTYPE>DEBIT</TRNTYPE>
+            <DTPOSTED>20250331000000.000[+01.00:CET]</DTPOSTED>
+            <TRNAMT>-30.00</TRNAMT>
+            <FITID>30011</FITID>
+            <NAME>Poplatek</NAME>
+            <MEMO>Poplatek - platebni karta</MEMO>
+          </STMTTRN>
+        </BANKTRANLIST>
+      </STMTRS>
+    </STMTTRNRS>
+  </BANKMSGSRSV1>
+</OFX>

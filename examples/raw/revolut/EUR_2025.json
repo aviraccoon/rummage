@@ -1,0 +1,111 @@
+[
+	{
+		"id": "exchange-eur-czk-001",
+		"legId": "exchange-eur-czk-001-0000",
+		"type": "EXCHANGE",
+		"state": "COMPLETED",
+		"startedDate": 1735750000000,
+		"updatedDate": 1735750000000,
+		"completedDate": 1735750000000,
+		"createdDate": 1735750000000,
+		"currency": "EUR",
+		"amount": -5000,
+		"fee": 0,
+		"balance": 10000,
+		"description": "Exchanged to CZK",
+		"tag": "general",
+		"category": "general",
+		"rate": 25.0,
+		"direction": "sell",
+		"counterpart": {
+			"amount": 125000,
+			"currency": "CZK"
+		}
+	},
+	{
+		"id": "f6a7b8c9-6666-7777-8888-999900001111",
+		"legId": "f6a7b8c9-6666-7777-0000-999900001111",
+		"type": "CARD_PAYMENT",
+		"state": "COMPLETED",
+		"startedDate": 1735689600000,
+		"updatedDate": 1735693200000,
+		"completedDate": 1735693200000,
+		"createdDate": 1735689600000,
+		"currency": "EUR",
+		"amount": -2500,
+		"fee": 0,
+		"balance": 15000,
+		"description": "Booking.com",
+		"tag": "travel",
+		"category": "travel",
+		"countryCode": "NL",
+		"merchant": {
+			"id": "booking-001",
+			"name": "Booking.com",
+			"mcc": "4722",
+			"category": "travel",
+			"city": "Amsterdam",
+			"country": "NL",
+			"address": "Herengracht 597, Amsterdam"
+		}
+	},
+	{
+		"id": "a7b8c9d0-7777-8888-9999-000011112222",
+		"legId": "a7b8c9d0-7777-8888-0000-000011112222",
+		"type": "CARD_PAYMENT",
+		"state": "COMPLETED",
+		"startedDate": 1735603200000,
+		"updatedDate": 1735606800000,
+		"completedDate": 1735606800000,
+		"createdDate": 1735603200000,
+		"currency": "EUR",
+		"amount": -850,
+		"fee": 0,
+		"balance": 17500,
+		"description": "Carrefour Express",
+		"tag": "groceries",
+		"category": "groceries",
+		"countryCode": "FR",
+		"rate": 25.12,
+		"merchant": {
+			"id": "carrefour-paris-01",
+			"name": "Carrefour Express",
+			"mcc": "5411",
+			"category": "groceries",
+			"city": "Paris",
+			"country": "FR",
+			"address": "15 Rue de Rivoli, Paris"
+		},
+		"counterpart": {
+			"amount": -21352,
+			"currency": "CZK"
+		}
+	},
+	{
+		"id": "b8c9d0e1-8888-9999-0000-111122223333",
+		"legId": "b8c9d0e1-8888-9999-0000-111122223333",
+		"type": "CARD_PAYMENT",
+		"state": "COMPLETED",
+		"startedDate": 1735516800000,
+		"updatedDate": 1735520400000,
+		"completedDate": 1735520400000,
+		"createdDate": 1735516800000,
+		"currency": "EUR",
+		"amount": -1200,
+		"fee": 0,
+		"balance": 18350,
+		"description": "Deutsche Bahn",
+		"tag": "transport",
+		"category": "transport",
+		"countryCode": "DE",
+		"merchant": {
+			"id": "db-001",
+			"name": "Deutsche Bahn",
+			"mcc": "4112",
+			"category": "transport",
+			"city": "Berlin",
+			"country": "DE",
+			"address": "Europaplatz 1, Berlin"
+		}
+	}
+]
