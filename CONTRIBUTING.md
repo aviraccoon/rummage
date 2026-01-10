@@ -165,6 +165,8 @@ We use strict TypeScript:
 - [ ] `bun run check` passes
 - [ ] Tests added/updated
 - [ ] Example data added (if new transform)
+- [ ] `CHANGELOG.md` updated (for notable changes)
+- [ ] Version bumped in `package.json` (for releases)
 
 ## What We're Looking For 🗑️
 

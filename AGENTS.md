@@ -36,6 +36,8 @@ bun run lint:fix # auto-fix formatting
 - Always write tests for new code (`*.test.ts` next to source)
 - Run `bun run check` before finishing - all tests and lints must pass
 - Add example data to `examples/` for new transforms
+- Update `CHANGELOG.md` for notable changes (new features, fixes, breaking changes)
+- Bump version in `package.json` when releasing
 - Fix warnings, don't ignore them - no "pre-existing issue" excuses, no adding Biome ignore rules or lint suppressions to avoid fixing code
 - Refactoring for testability is encouraged (e.g., extracting pure functions), but don't over-engineer
 - See CONTRIBUTING.md for detailed guidance
