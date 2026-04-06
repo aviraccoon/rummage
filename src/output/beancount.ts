@@ -72,17 +72,33 @@ function collectAccountsFromTransactions(
 /**
  * Find the earliest transaction date for opening accounts.
  */
-function findEarliestDate(transactions: Transaction[]): string {
-	if (transactions.length === 0) return "2020-01-01";
+function findEarliestDate(
+	transactions: Transaction[],
+	openingBalances?: BalanceAssertion[],
+): string {
+	if (
+		transactions.length === 0 &&
+		(!openingBalances || openingBalances.length === 0)
+	)
+		return "2020-01-01";
 
-	let earliest = transactions[0]?.date ?? "2020-01-01";
+	let earliest = transactions[0]?.date ?? "9999-12-31";
 	for (const txn of transactions) {
 		if (txn.date < earliest) {
 			earliest = txn.date;
 		}
 	}
 
-	// Open accounts one day before first transaction
+	// Also consider opening balance dates
+	if (openingBalances) {
+		for (const ob of openingBalances) {
+			if (ob.date < earliest) {
+				earliest = ob.date;
+			}
+		}
+	}
+
+	// Open accounts one day before first transaction/opening balance
 	const date = new Date(earliest);
 	date.setDate(date.getDate() - 1);
 	return date.toISOString().slice(0, 10);
@@ -95,9 +111,10 @@ function findEarliestDate(transactions: Transaction[]): string {
 function generateAccountDirectives(
 	accounts: Account[],
 	transactions: Transaction[],
+	openingBalances?: BalanceAssertion[],
 ): string[] {
 	const lines: string[] = [];
-	const openDate = findEarliestDate(transactions);
+	const openDate = findEarliestDate(transactions, openingBalances);
 
 	// Build a map of explicitly defined accounts
 	const definedAccounts = new Map<string, Account>();
@@ -319,7 +336,9 @@ export function generateBeancount(
 
 	// Account definitions
 	lines.push("; Accounts");
-	lines.push(...generateAccountDirectives(accounts, transactions));
+	lines.push(
+		...generateAccountDirectives(accounts, transactions, openingBalances),
+	);
 
 	// Price directives (after accounts, before transactions)
 	if (prices && prices.length > 0) {

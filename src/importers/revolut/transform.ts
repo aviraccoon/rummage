@@ -116,6 +116,18 @@ function isExchangeReceivingLeg(txn: RevolutTransaction): boolean {
 }
 
 /**
+ * Check if a transaction is on a savings/vault account.
+ * Used to filter balance calculations — SAVINGS account balances
+ * reflect the vault balance, not the current account balance.
+ * Note: vault transfers (identifiable by `vault` field) have both a CURRENT
+ * and SAVINGS leg that net to zero in transactions, but SAVINGS balances
+ * must be excluded from balance assertions.
+ */
+function isSavingsTransaction(txn: RevolutTransaction): boolean {
+	return txn.account?.type === "SAVINGS";
+}
+
+/**
  * Check if a transaction is completed (not cancelled, declined, etc.).
  */
 function isCompletedTransaction(txn: RevolutTransaction): boolean {
@@ -142,7 +154,10 @@ function extractBalanceAssertion(
 	// Filter to completed transactions with balance data
 	// Include exchange receiving legs - they have the correct final balance
 	const withBalance = transactions.filter(
-		(t) => isCompletedTransaction(t) && t.balance !== undefined,
+		(t) =>
+			isCompletedTransaction(t) &&
+			!isSavingsTransaction(t) &&
+			t.balance !== undefined,
 	);
 
 	if (withBalance.length === 0) return undefined;
@@ -181,9 +196,12 @@ function extractOpeningBalance(
 	accountBase: string,
 	source: string,
 ): BalanceAssertion | undefined {
-	// Filter to completed transactions with balance data
+	// Filter to completed current-account transactions with balance data
 	const withBalance = transactions.filter(
-		(t) => isCompletedTransaction(t) && t.balance !== undefined,
+		(t) =>
+			isCompletedTransaction(t) &&
+			!isSavingsTransaction(t) &&
+			t.balance !== undefined,
 	);
 
 	if (withBalance.length === 0) return undefined;
@@ -432,7 +450,12 @@ function calculateDirectoryBalances(
 	// Group all transactions by currency
 	const byCurrency = new Map<string, RevolutTransaction[]>();
 	for (const txn of allRawTransactions) {
-		if (!isCompletedTransaction(txn) || txn.balance === undefined) continue;
+		if (
+			!isCompletedTransaction(txn) ||
+			isSavingsTransaction(txn) ||
+			txn.balance === undefined
+		)
+			continue;
 		const key = sanitizeCurrency(txn.currency);
 		const existing = byCurrency.get(key) ?? [];
 		existing.push(txn);

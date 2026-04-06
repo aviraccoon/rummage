@@ -50,6 +50,9 @@ export interface RevolutTransaction {
 		id: string;
 		type: string;
 	};
+	vault?: {
+		id: string;
+	};
 	comment?: string;
 }
 
