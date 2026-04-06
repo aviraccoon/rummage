@@ -21,12 +21,14 @@ import {
 import { join } from "node:path";
 import { createInterface } from "node:readline";
 import { parseArgs } from "node:util";
+
 import { config } from "../../config.ts";
 import { loadSourceConfig } from "../../registry.ts";
 import { requireRealData } from "../utils.ts";
 import {
 	deduplicateTransactions,
 	detectCurrency,
+	epochToIsoDate,
 	fetchAllTransactions,
 	groupByYear,
 	parseCurlCommand,
@@ -131,6 +133,46 @@ function loadExistingTransactions(filePath: string): RevolutTransaction[] {
 	}
 }
 
+/** Show date coverage of existing JSON files in the output directory */
+function showExistingCoverage(outputDir: string): void {
+	if (!existsSync(outputDir)) return;
+
+	const files = readdirSync(outputDir)
+		.filter((f) => f.endsWith(".json"))
+		.sort();
+
+	if (files.length === 0) return;
+
+	console.log("Existing data:");
+	for (const file of files) {
+		const filePath = join(outputDir, file);
+		try {
+			const txns = JSON.parse(
+				readFileSync(filePath, "utf-8"),
+			) as RevolutTransaction[];
+			if (txns.length === 0) {
+				console.log(`  ${file}: empty`);
+				continue;
+			}
+			// Transactions are sorted newest-first
+			const newest = txns[0];
+			const oldest = txns[txns.length - 1];
+			if (!newest || !oldest) continue;
+			const from = epochToIsoDate(oldest.startedDate);
+			const to = epochToIsoDate(newest.startedDate);
+			const desc = newest.description ?? newest.type ?? "";
+			const amount = (newest.amount / 100).toFixed(2);
+			const time = new Date(newest.startedDate).toISOString().slice(11, 16);
+			console.log(
+				`  ${file}: ${txns.length} txns, ${from} → ${to} ${time} ${amount} ${desc}`,
+			);
+		} catch {
+			console.log(`  ${file}: unreadable`);
+		}
+	}
+	console.log();
+}
+
 function saveTransactions(
 	filePath: string,
 	transactions: RevolutTransaction[],
@@ -183,12 +225,21 @@ Examples:
 	const outputName = values.name ? `revolut-${values.name}` : "revolut";
 	console.log(`Output: ${outputName}/\n`);
 
+	// Show existing data coverage
+	showExistingCoverage(outputDir);
+
 	console.log("Instructions:");
 	console.log("1. Go to https://app.revolut.com and log in");
 	console.log("2. Click 'See all' transactions for the currency you want");
 	console.log("3. Open DevTools (F12) → Network tab");
 	console.log("4. Find the request to 'transactions/last'");
-	console.log("5. Right-click → Copy → Copy as cURL\n");
+	console.log("5. Right-click → Copy → Copy as cURL");
+	console.log(
+		"\nNote: Only auth is extracted from the cURL — URL params are ignored.",
+	);
+	console.log(
+		"All transactions are fetched from newest to oldest, then deduped against existing files.\n",
+	);
 
 	const curlInput = await promptMultiline("Paste your cURL command:");
 

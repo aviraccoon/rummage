@@ -14,14 +14,22 @@
  *   FIO_TOKEN_SAVINGS=...
  */
 
-import { existsSync, mkdirSync, writeFileSync } from "node:fs";
+import {
+	existsSync,
+	mkdirSync,
+	readdirSync,
+	readFileSync,
+	writeFileSync,
+} from "node:fs";
 import { join } from "node:path";
+import { createInterface } from "node:readline";
 import { parseArgs } from "node:util";
 import { config } from "../../config.ts";
 import { requireRealData, sleep } from "../utils.ts";
 import {
 	DEFAULT_DAYS,
 	extractTransactions,
+	type FioAccountStatement,
 	fetchTransactions,
 	formatDate,
 	getDateDaysAgo,
@@ -83,6 +91,57 @@ export function formatSampleTransaction(simple: {
 	const sign = simple.amount > 0 ? "+" : "";
 	const desc = simple.userIdentification ?? simple.type;
 	return `${simple.date} ${sign}${simple.amount} ${simple.currency} - ${desc}`;
+}
+
+/** Show date coverage of existing JSON files for each account directory */
+function showExistingCoverage(rawDir: string, accounts: Account[]): void {
+	let hasData = false;
+	for (const { name } of accounts) {
+		const accountDir = buildAccountDir(rawDir, name);
+		if (!existsSync(accountDir)) continue;
+
+		const files = readdirSync(accountDir)
+			.filter((f) => f.endsWith(".json"))
+			.sort();
+		if (files.length === 0) continue;
+
+		if (!hasData) {
+			console.log("Existing data:");
+			hasData = true;
+		}
+
+		for (const file of files) {
+			const filePath = join(accountDir, file);
+			try {
+				const data = JSON.parse(
+					readFileSync(filePath, "utf-8"),
+				) as FioAccountStatement;
+				const info = data.accountStatement.info;
+				const txns = extractTransactions(data);
+				const dateStart = info.dateStart.split("+")[0] ?? info.dateStart;
+				const dateEnd = info.dateEnd.split("+")[0] ?? info.dateEnd;
+
+				if (txns.length === 0) {
+					console.log(
+						`  fio-${name}/${file}: ${dateStart} → ${dateEnd}, no transactions`,
+					);
+					continue;
+				}
+
+				const last = txns[txns.length - 1];
+				if (!last) continue;
+				const simple = simplifyTransaction(last);
+				const lastDesc = formatSampleTransaction(simple);
+				console.log(
+					`  fio-${name}/${file}: ${txns.length} txns, ${dateStart} → ${dateEnd}`,
+				);
+				console.log(`    last: ${lastDesc}`);
+			} catch {
+				console.log(`  fio-${name}/${file}: unreadable`);
+			}
+		}
+	}
+	if (hasData) console.log();
 }
 
 /** Fetch and save transactions for a single account */
@@ -208,6 +267,9 @@ Data older than 90 days requires manual authorization at ib.fio.cz.
 		process.exit(1);
 	}
 
+	// Show existing data coverage
+	showExistingCoverage(RAW_DIR, accounts);
+
 	// Validate tokens
 	for (const { name, token } of accounts) {
 		if (!isValidToken(token)) {
@@ -251,6 +313,23 @@ Data older than 90 days requires manual authorization at ib.fio.cz.
 			? "Mode: incremental (since last download)"
 			: `Period: ${values.from ?? defaultFrom} to ${values.to ?? defaultTo}`,
 	);
+
+	// Confirm before fetching
+	const rl = createInterface({
+		input: process.stdin,
+		output: process.stdout,
+	});
+	const proceed = await new Promise<boolean>((resolve) => {
+		rl.question("\nProceed? [Y/n] ", (answer) => {
+			rl.close();
+			const a = answer.trim().toLowerCase();
+			resolve(a === "" || a === "y" || a === "yes");
+		});
+	});
+	if (!proceed) {
+		console.log("Aborted.");
+		process.exit(0);
+	}
 
 	let totalTransactions = 0;
 	let failures = 0;

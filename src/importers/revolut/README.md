@@ -17,6 +17,10 @@ bun run src/importers/revolut/fetch.ts --name personal # saves to raw/revolut-pe
 Use `--name` to create separate directories for multiple Revolut accounts.
 Repeat for each currency (USD, EUR, CZK) within each account.
 
+Only authentication data is extracted from the cURL — URL parameters are ignored.
+The script always fetches all transactions from newest to oldest, then deduplicates
+against existing files by transaction ID. Safe to re-run anytime.
+
 ## Files
 
 - `{CUR}_{YEAR}.json` - Transaction data per currency per year

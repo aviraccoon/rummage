@@ -271,6 +271,14 @@ export function parseApiError(status: number, body: string): Error {
 	if (status === 404) {
 		return new Error("Token not found or invalid");
 	}
+	if (status === 422) {
+		return new Error(
+			`HTTP 422: ${body}\n\n` +
+				`Hint: Data older than 90 days requires authorization.\n` +
+				`To unlock: https://ib.fio.cz → Nastavení → API → click the lock icon for the token\n` +
+				`This creates an authorization request. After approving it, historical data is accessible for 10 minutes.`,
+		);
+	}
 	return new Error(`HTTP ${status}: ${body}`);
 }
 

@@ -31,7 +31,13 @@ Token names determine output directories: `FIO_TOKEN_CZK` → `raw/fio-czk/`
 - `--from 2024-01-01` - Fetch from specific date
 - `--reset-marker 2024-01-01` - Reset the server-side "last download" marker
 
-Note: Fio rate-limits to 30s between requests. Data older than 90 days requires manual unlock at ib.fio.cz.
+Note: Fio rate-limits to 30s between requests. Data older than 90 days requires manual unlock:
+
+1. Sign in at https://ib.fio.cz
+2. Go to **Nastavení** → **API**
+3. Click the **lock icon** next to the token
+4. Approve the authorization request (SMS/push)
+5. Historical data is accessible for **10 minutes** — run the fetch immediately
 
 ## Downloading statements (manual alternative)
 
