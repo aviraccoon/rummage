@@ -1,5 +1,8 @@
 # Revolut
 
+See [API.md](API.md) for documentation of the internal web app API endpoints,
+transaction object shape, and known quirks.
+
 ## Fetching transactions
 
 ```bash
@@ -21,6 +24,15 @@ Only authentication data is extracted from the cURL — URL parameters are ignor
 The script always fetches all transactions from newest to oldest, then deduplicates
 against existing files by transaction ID. Safe to re-run anytime.
 
+### What's fetched
+
+The script calls Revolut's internal web app API (`/api/retail/user/current/transactions/last`).
+This is **not** the official Open Banking or Business API — it's the same endpoint the
+web app uses. Auth comes from your browser session.
+
+Each currency pocket is fetched separately. The response includes vault/savings
+transactions and exchange legs involving other currencies.
+
 ## Files
 
 - `{CUR}_{YEAR}.json` - Transaction data per currency per year
@@ -33,9 +45,28 @@ against existing files by transaction ID. Safe to re-run anytime.
 3. Download PDF
 4. Save to `_statements/`
 
+## Vault/Savings transactions
+
+Vault transfers (Savings Vaults, Flexible Cash Funds, spare change round-ups)
+appear as two legs: a CURRENT leg (outflow) and a SAVINGS leg (inflow), or
+vice versa. Both are imported and net to zero on the account.
+
+The `vault` field on the transaction object identifies vault movements.
+`account.type` distinguishes `CURRENT` from `SAVINGS` — the `balance` field
+reflects whichever account type the transaction belongs to. Balance assertions
+filter out SAVINGS transactions to avoid using vault balances.
+
+See [API.md](API.md) for details on the transaction shape.
+
+## Pending transactions
+
+Transactions with `state: "PENDING"` are authorized but not settled. They have
+no `balance` or `completedDate`. They're imported but don't affect balance
+assertions (which are derived from the latest completed transaction's balance).
+
 ## Closed currency accounts
 
-Revolut's API exports don't include complete transaction history for closed or
+Revolut's exports don't include complete transaction history for closed or
 inactive currency accounts. If you previously held a currency (e.g., GBP) but
 closed it, the export may be missing earlier transactions.
 
