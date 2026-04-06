@@ -88,7 +88,6 @@ rummage/
 │   ├── locations.ts     # Payee locations
 │   ├── overrides.ts     # Transaction corrections
 │   └── rules.ts         # Categorization patterns
-├── data/                # Your real data (gitignored, same structure)
 ├── src/                 # Source code
 └── scripts/             # Custom reports
 ```
@@ -97,22 +96,23 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for source code structure.
 
 ## Using Your Own Data
 
-1. Create `data/` directory (gitignored)
+1. Create a data directory (anywhere on disk)
 2. Copy structure from `examples/`
-3. Add your bank exports to `data/raw/`
-4. Customize `data/rules.ts` with your patterns
+3. Add your bank exports to `<data>/raw/`
+4. Customize `<data>/rules.ts` with your patterns
 5. Rummage:
 
 ```bash
-RUMMAGE_DATA_SOURCE=data bun run build
+RUMMAGE_DATA_SOURCE=/path/to/your/data bun run build
 ```
 
 Or create `.env`:
 ```
-RUMMAGE_DATA_SOURCE=data
+RUMMAGE_DATA_SOURCE=/path/to/your/data
 ```
 
-Default is `examples` - safe for tests and new users.
+Default is `examples` - safe for tests and new users. Relative paths are
+resolved from the project root.
 
 ## API Tokens
 

@@ -1,22 +1,27 @@
 /**
  * Configuration - controls data source via environment variable.
  *
- * RUMMAGE_DATA_SOURCE=examples  → use examples/ (default, for tests)
- * RUMMAGE_DATA_SOURCE=data      → use data/ (your real finances)
+ * RUMMAGE_DATA_SOURCE=examples           → use examples/ (default, for tests)
+ * RUMMAGE_DATA_SOURCE=/path/to/finances  → use an external directory
+ *
+ * Any value other than "examples" is treated as a path (resolved relative to
+ * the project root if not absolute).
  */
 
-import { join } from "node:path";
+import { isAbsolute, join } from "node:path";
 
 export const ROOT = join(import.meta.dir, "..");
 export const EXAMPLES_PATH = join(ROOT, "examples");
 export const EXAMPLES_RAW = join(EXAMPLES_PATH, "raw");
 
-type DataSource = "examples" | "data";
+const dataSource = process.env.RUMMAGE_DATA_SOURCE || "examples";
 
-const dataSource: DataSource =
-	(process.env.RUMMAGE_DATA_SOURCE as DataSource) || "examples";
-
-export const DATA_PATH = join(ROOT, dataSource);
+export const DATA_PATH =
+	dataSource === "examples"
+		? EXAMPLES_PATH
+		: isAbsolute(dataSource)
+			? dataSource
+			: join(ROOT, dataSource);
 
 export const config = {
 	/** Which data source is being used */

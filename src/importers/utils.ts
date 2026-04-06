@@ -13,7 +13,7 @@ export function requireRealData(): void {
 	if (config.isUsingExamples) {
 		console.error(
 			"Error: Cannot fetch to examples directory.\n" +
-				"Set RUMMAGE_DATA_SOURCE=data to use real data directory.",
+				"Set RUMMAGE_DATA_SOURCE to a data directory path.",
 		);
 		process.exit(1);
 	}
