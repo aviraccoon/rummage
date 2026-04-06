@@ -33,6 +33,19 @@ function epochToDate(epoch: number): string {
 	return `${year}-${month}-${day}`;
 }
 
+/**
+ * Sanitize currency code for beancount compatibility.
+ * Beancount currencies must be uppercase letters only (2-24 chars).
+ * Revolut uses codes like "X:8:SUI" for some crypto — strip non-alpha chars.
+ */
+export function sanitizeCurrency(currency: string): string {
+	const cleaned = currency.replace(/[^A-Za-z]/g, "").toUpperCase();
+	if (cleaned.length === 0) {
+		throw new Error(`Currency "${currency}" has no valid characters`);
+	}
+	return cleaned;
+}
+
 /** Decimal places for different currencies (fiat = 2, crypto varies) */
 const CURRENCY_DECIMALS: Record<string, number> = {
 	BTC: 8,
@@ -41,6 +54,8 @@ const CURRENCY_DECIMALS: Record<string, number> = {
 	XRP: 6,
 	BCH: 8,
 	DOGE: 8,
+	DOT: 2,
+	"X:8:SUI": 2,
 };
 
 /**
@@ -139,8 +154,9 @@ function extractBalanceAssertion(
 
 	if (latest.balance === undefined) return undefined;
 
-	const currency = latest.currency;
-	const balance = amountToDecimal(latest.balance, currency);
+	const rawCurrency = latest.currency;
+	const currency = sanitizeCurrency(rawCurrency);
+	const balance = amountToDecimal(latest.balance, rawCurrency);
 
 	// Balance assertion date is the day AFTER the latest transaction
 	// because beancount checks balance at the START of the day
@@ -179,12 +195,13 @@ function extractOpeningBalance(
 
 	if (oldest.balance === undefined) return undefined;
 
-	const currency = oldest.currency;
+	const rawCurrency = oldest.currency;
+	const currency = sanitizeCurrency(rawCurrency);
 	// Opening balance = post-transaction balance - transaction amount
 	// This "undoes" the transaction to get what was there before
 	const openingBalance = amountToDecimal(
 		oldest.balance - oldest.amount,
-		currency,
+		rawCurrency,
 	);
 
 	return {
@@ -214,8 +231,8 @@ function extractPriceFromExchange(
 
 	// From EUR_2025.json: selling EUR, rate=25.0, counterpart=CZK
 	// This means: 1 EUR = 25 CZK (rate is how much quote currency per 1 base)
-	const baseCurrency = txn.currency; // EUR (being sold)
-	const quoteCurrency = txn.counterpart.currency; // CZK (being bought)
+	const baseCurrency = sanitizeCurrency(txn.currency); // EUR (being sold)
+	const quoteCurrency = sanitizeCurrency(txn.counterpart.currency); // CZK (being bought)
 
 	return {
 		date: epochToDate(txn.startedDate),
@@ -235,15 +252,16 @@ function importTransaction(
 	source: string,
 ): Transaction {
 	const description = txn.merchant?.name ?? txn.description ?? "Unknown";
+	const currency = sanitizeCurrency(txn.currency);
 	// Use transaction's actual currency for account name
-	const accountName = `${accountBase}:${txn.currency}`;
+	const accountName = `${accountBase}:${currency}`;
 
 	const result: Transaction = {
 		id: `revolut-${txn.legId}`,
 		date: epochToDate(txn.startedDate),
 		amount: {
 			value: amountToDecimal(txn.amount, txn.currency),
-			currency: txn.currency,
+			currency,
 		},
 		description,
 		account: accountName,
@@ -253,11 +271,14 @@ function importTransaction(
 
 	// Handle exchange transactions - set up transfer to destination account
 	if (txn.type === "EXCHANGE" && txn.counterpart) {
-		const destCurrency = txn.counterpart.currency;
+		const destCurrency = sanitizeCurrency(txn.counterpart.currency);
 		result.transfer = {
 			toAccount: `${accountBase}:${destCurrency}`,
 			toAmount: {
-				value: amountToDecimal(txn.counterpart.amount, destCurrency),
+				value: amountToDecimal(
+					txn.counterpart.amount,
+					txn.counterpart.currency,
+				),
 				currency: destCurrency,
 			},
 		};
@@ -267,7 +288,7 @@ function importTransaction(
 		// Add original amount if there was currency conversion (non-exchange)
 		result.originalAmount = {
 			value: amountToDecimal(txn.counterpart.amount, txn.counterpart.currency),
-			currency: txn.counterpart.currency,
+			currency: sanitizeCurrency(txn.counterpart.currency),
 		};
 	}
 
@@ -412,9 +433,10 @@ function calculateDirectoryBalances(
 	const byCurrency = new Map<string, RevolutTransaction[]>();
 	for (const txn of allRawTransactions) {
 		if (!isCompletedTransaction(txn) || txn.balance === undefined) continue;
-		const existing = byCurrency.get(txn.currency) ?? [];
+		const key = sanitizeCurrency(txn.currency);
+		const existing = byCurrency.get(key) ?? [];
 		existing.push(txn);
-		byCurrency.set(txn.currency, existing);
+		byCurrency.set(key, existing);
 	}
 
 	const openingBalances: BalanceAssertion[] = [];
@@ -428,7 +450,7 @@ function calculateDirectoryBalances(
 		if (oldest.balance === undefined) continue;
 		const openingBalance = amountToDecimal(
 			oldest.balance - oldest.amount,
-			currency,
+			oldest.currency,
 		);
 		openingBalances.push({
 			date: epochToDate(oldest.startedDate),
@@ -442,7 +464,7 @@ function calculateDirectoryBalances(
 			a.startedDate > b.startedDate ? a : b,
 		);
 		if (latest.balance === undefined) continue;
-		const balance = amountToDecimal(latest.balance, currency);
+		const balance = amountToDecimal(latest.balance, latest.currency);
 		const nextDay = new Date(latest.startedDate);
 		nextDay.setDate(nextDay.getDate() + 1);
 		balanceAssertions.push({

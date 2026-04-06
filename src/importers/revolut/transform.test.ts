@@ -3,7 +3,11 @@ import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type { RevolutTransaction } from "./api.ts";
-import { importRevolutDirectory, importRevolutFile } from "./transform.ts";
+import {
+	importRevolutDirectory,
+	importRevolutFile,
+	sanitizeCurrency,
+} from "./transform.ts";
 
 const TEST_DIR = join(tmpdir(), "rummage-test-revolut");
 
@@ -32,6 +36,34 @@ function setupTestDir() {
 function cleanupTestDir() {
 	rmSync(TEST_DIR, { recursive: true, force: true });
 }
+
+describe("sanitizeCurrency", () => {
+	test("passes through normal fiat currencies", () => {
+		expect(sanitizeCurrency("USD")).toBe("USD");
+		expect(sanitizeCurrency("EUR")).toBe("EUR");
+		expect(sanitizeCurrency("CZK")).toBe("CZK");
+	});
+
+	test("passes through simple crypto codes", () => {
+		expect(sanitizeCurrency("BTC")).toBe("BTC");
+		expect(sanitizeCurrency("DOT")).toBe("DOT");
+		expect(sanitizeCurrency("BCH")).toBe("BCH");
+	});
+
+	test("strips colons and digits from Revolut crypto codes", () => {
+		expect(sanitizeCurrency("X:8:SUI")).toBe("XSUI");
+	});
+
+	test("uppercases lowercase input", () => {
+		expect(sanitizeCurrency("usd")).toBe("USD");
+		expect(sanitizeCurrency("x:8:sui")).toBe("XSUI");
+	});
+
+	test("throws on empty result", () => {
+		expect(() => sanitizeCurrency("123")).toThrow();
+		expect(() => sanitizeCurrency("::")).toThrow();
+	});
+});
 
 describe("importRevolutFile", () => {
 	test("imports basic transaction", () => {
@@ -374,6 +406,75 @@ describe("importRevolutFile", () => {
 		const result = importRevolutFile(filePath);
 
 		expect(result.transactions[0]?.account).toBe("Assets:Revolut:EUR");
+
+		cleanupTestDir();
+	});
+
+	test("sanitizes non-standard crypto currency codes", () => {
+		setupTestDir();
+		const filePath = join(TEST_DIR, "CZK_2024.json");
+		writeFileSync(
+			filePath,
+			JSON.stringify([
+				makeRevolutTxn({
+					legId: "crypto-sell",
+					currency: "X:9:FAKECOIN",
+					amount: -500000,
+					type: "EXCHANGE",
+					rate: 5.5,
+					counterpart: { amount: 2750, currency: "CZK" },
+					balance: 0,
+				}),
+			]),
+		);
+
+		const result = importRevolutFile(filePath);
+
+		// Transaction should use sanitized currency
+		const txn = result.transactions[0];
+		expect(txn?.amount.currency).toBe("XFAKECOIN");
+		expect(txn?.account).toBe("Assets:Revolut:XFAKECOIN");
+
+		// Transfer destination should also be sanitized
+		expect(txn?.transfer?.toAmount.currency).toBe("CZK");
+		expect(txn?.transfer?.toAccount).toBe("Assets:Revolut:CZK");
+
+		// Balance assertion should use sanitized currency
+		const assertion = result.balanceAssertions?.[0];
+		expect(assertion?.account).toBe("Assets:Revolut:XFAKECOIN");
+		expect(assertion?.balance.currency).toBe("XFAKECOIN");
+
+		// Price directive should use sanitized currencies
+		const price = result.prices?.[0];
+		expect(price?.baseCurrency).toBe("XFAKECOIN");
+		expect(price?.quoteCurrency).toBe("CZK");
+
+		cleanupTestDir();
+	});
+
+	test("passes through standard crypto codes unchanged", () => {
+		setupTestDir();
+		const filePath = join(TEST_DIR, "BTC_2024.json");
+		writeFileSync(
+			filePath,
+			JSON.stringify([
+				makeRevolutTxn({
+					legId: "btc-sell",
+					currency: "BTC",
+					amount: -10000000,
+					type: "EXCHANGE",
+					rate: 50000,
+					counterpart: { amount: 5000000, currency: "USD" },
+					balance: 0,
+				}),
+			]),
+		);
+
+		const result = importRevolutFile(filePath);
+
+		const txn = result.transactions[0];
+		expect(txn?.amount.currency).toBe("BTC");
+		expect(txn?.account).toBe("Assets:Revolut:BTC");
 
 		cleanupTestDir();
 	});
