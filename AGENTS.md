@@ -22,7 +22,12 @@ bun run lint:fix # auto-fix formatting
 - `src/registry.ts` - importer registry
 - `src/types.ts` - core types: Transaction, Account, Rule, Override
 - `src/build.ts` - pipeline orchestration
+- `src/lib/inflation.ts` - inflation data (Eurostat HICP + BLS CPI)
 - `examples/` - test data (used by default)
+
+## Inflation
+
+When building scripts or reports that show monetary values over time, always consider inflation. Use `src/lib/inflation.ts` for CPI data. Show real (inflation-adjusted) values alongside nominal, or note that values aren't adjusted.
 
 ## Code Style
 
