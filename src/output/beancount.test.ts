@@ -5,6 +5,7 @@ import { join } from "node:path";
 import type {
 	Account,
 	BalanceAssertion,
+	CommodityDefinition,
 	Price,
 	Transaction,
 } from "../types.ts";
@@ -289,6 +290,65 @@ describe("generateBeancount", () => {
 		expect(transactionSection).not.toContain("Expenses:Uncategorized");
 	});
 
+	test("generates commodity purchase transactions", () => {
+		const commodityTxn: Transaction[] = [
+			{
+				id: "fund-buy-2025-03-13-500",
+				date: "2025-03-13",
+				amount: { value: -1000.5, currency: "CZK" },
+				description: "Buy fund units",
+				payee: "Fund Manager",
+				account: "Assets:Investments:Fund:Cash",
+				source: "test",
+				commodity: {
+					account: "Assets:Investments:Fund",
+					symbol: "TESTFUND",
+					units: 500,
+					costPerUnit: { value: 2.001, currency: "CZK" },
+				},
+			},
+		];
+		const output = generateBeancount(commodityTxn, []);
+
+		// Cash side
+		expect(output).toContain("Assets:Investments:Fund:Cash  -1000.50 CZK");
+		// Commodity side with cost basis (4 decimal places)
+		expect(output).toContain(
+			"Assets:Investments:Fund  500 TESTFUND {2.0010 CZK}",
+		);
+		// Should NOT have Expenses:Uncategorized
+		const txnSection = output.split("; === 2025-03 ===")[1];
+		expect(txnSection).not.toContain("Expenses:Uncategorized");
+		// Both accounts should be opened
+		expect(output).toContain("open Assets:Investments:Fund:Cash");
+		expect(output).toContain("open Assets:Investments:Fund");
+	});
+
+	test("generates commodity definitions", () => {
+		const commodities: CommodityDefinition[] = [
+			{
+				symbol: "TESTFUND",
+				name: "Test Real Estate Fund (CZK)",
+				isin: "CZ0000000001",
+				date: "2021-02-28",
+			},
+		];
+		const output = generateBeancount(
+			[],
+			[],
+			undefined,
+			undefined,
+			undefined,
+			undefined,
+			commodities,
+		);
+
+		expect(output).toContain("; Commodities");
+		expect(output).toContain("2021-02-28 commodity TESTFUND");
+		expect(output).toContain('name: "Test Real Estate Fund (CZK)"');
+		expect(output).toContain('isin: "CZ0000000001"');
+	});
+
 	test("generates balance assertions", () => {
 		const balanceAssertions: BalanceAssertion[] = [
 			{
@@ -307,11 +367,9 @@ describe("generateBeancount", () => {
 		const output = generateBeancount([], [], balanceAssertions);
 
 		expect(output).toContain("; Balance Assertions");
+		expect(output).toContain("2025-12-31 balance Assets:Revolut:CZK 5000 CZK");
 		expect(output).toContain(
-			"2025-12-31 balance Assets:Revolut:CZK 5000.00 CZK",
-		);
-		expect(output).toContain(
-			"2025-12-31 balance Assets:Bank:Checking 10000.00 CZK",
+			"2025-12-31 balance Assets:Bank:Checking 10000 CZK",
 		);
 	});
 

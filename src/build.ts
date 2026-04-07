@@ -10,14 +10,33 @@
  * 6. Generate beancount output
  */
 
-import { existsSync, mkdirSync, readdirSync } from "node:fs";
+import { existsSync, mkdirSync, readdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { config, DATA_PATH } from "./config.ts";
 import { writeBeancount } from "./output/beancount.ts";
 import { applyOverrides, loadAllOverrides } from "./overrides.ts";
 import { importAllSources } from "./registry.ts";
 import { applyRules } from "./rules.ts";
-import type { BalanceAssertion, Price, Rule, Transaction } from "./types.ts";
+import type {
+	BalanceAssertion,
+	CommodityDefinition,
+	Price,
+	Rule,
+	Transaction,
+} from "./types.ts";
+
+/** Discover supplementary beancount files in the generated directory. */
+function discoverIncludes(generatedPath: string): string[] {
+	if (!existsSync(generatedPath)) return [];
+	return readdirSync(generatedPath)
+		.filter(
+			(f) =>
+				f.endsWith(".beancount") &&
+				f !== "main.beancount" &&
+				!f.startsWith("_"),
+		)
+		.sort();
+}
 
 async function loadDataConfig() {
 	// Dynamically import the data source's config files
@@ -98,6 +117,20 @@ async function main() {
 		(r) => r.openingBalances ?? [],
 	);
 	const allPrices: Price[] = results.flatMap((r) => r.prices ?? []);
+	const allCommodities: CommodityDefinition[] = results.flatMap(
+		(r) => r.commodities ?? [],
+	);
+
+	// Write supplementary beancount files from importers
+	const supplementaryFiles: string[] = [];
+	for (const result of results) {
+		if (result.supplementaryBeancount) {
+			const filename = `${result.name}.beancount`;
+			const filePath = join(config.generatedPath, filename);
+			writeFileSync(filePath, result.supplementaryBeancount);
+			supplementaryFiles.push(filename);
+		}
+	}
 
 	// Apply categorization rules
 	console.log(`\n📋 Applying ${rules.length} categorization rules`);
@@ -159,6 +192,20 @@ async function main() {
 	if (allPrices.length > 0) {
 		console.log(`   Including ${allPrices.length} price directive(s)`);
 	}
+	// Discover supplementary beancount files (importer-generated + pre-existing)
+	const includes = discoverIncludes(config.generatedPath);
+	if (includes.length > 0) {
+		console.log(
+			`   Including ${includes.length} supplementary file(s): ${includes.join(", ")}`,
+		);
+	}
+
+	if (allCommodities.length > 0) {
+		console.log(
+			`   Including ${allCommodities.length} commodity definition(s)`,
+		);
+	}
+
 	writeBeancount(
 		beancountPath,
 		allTransactions,
@@ -166,6 +213,8 @@ async function main() {
 		allBalanceAssertions,
 		allPrices,
 		allOpeningBalances,
+		includes,
+		allCommodities,
 	);
 
 	// Report errors

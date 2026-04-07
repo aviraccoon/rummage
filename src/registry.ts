@@ -10,6 +10,7 @@
 
 import { existsSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
+import { importConseqDirectory } from "./importers/conseq/transform.ts";
 import { importFioDirectory } from "./importers/fio/transform.ts";
 import { importManualDirectory } from "./importers/manual.ts";
 import { importOfxDirectory } from "./importers/ofx.ts";
@@ -27,6 +28,11 @@ import type { BalanceAssertion, ImportResult } from "./types.ts";
  */
 export const importers: Importer[] = [
 	// Bank-specific importers (matched by directory name)
+	{
+		name: "conseq",
+		directoryMatch: "conseq",
+		import: (dirPath) => importConseqDirectory(dirPath),
+	},
 	{
 		name: "fio",
 		directoryMatch: "fio",

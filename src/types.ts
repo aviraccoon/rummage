@@ -10,6 +10,17 @@ export interface Money {
 	currency: string;
 }
 
+export interface CommodityDefinition {
+	/** Symbol used in beancount: CONSEQRE, AMUNDI, etc. */
+	symbol: string;
+	/** Human-readable name */
+	name?: string;
+	/** ISIN if applicable */
+	isin?: string;
+	/** Date when commodity was first used (for open directive) */
+	date: string;
+}
+
 export interface Location {
 	name: string;
 	coords?: [number, number]; // [lat, long]
@@ -62,6 +73,24 @@ export interface Transaction {
 		toAccount: string;
 		/** Amount in destination currency */
 		toAmount: Money;
+	};
+	/**
+	 * Commodity purchase or sale.
+	 * When set, the counter-posting uses commodity units at cost instead of
+	 * a simple auto-balanced category posting.
+	 *
+	 * txn.account + txn.amount = cash side
+	 * commodity.account + commodity.units SYMBOL {costPerUnit} = commodity side
+	 */
+	commodity?: {
+		/** Account holding the commodity: Assets:Investments:Conseq */
+		account: string;
+		/** Commodity symbol: CONSEQRE */
+		symbol: string;
+		/** Number of units purchased (positive) or sold (negative) */
+		units: number;
+		/** Cost per unit at time of purchase */
+		costPerUnit: Money;
 	};
 }
 
@@ -159,6 +188,14 @@ export interface ImportResult {
 	openingBalances?: BalanceAssertion[];
 	/** Price/exchange rate data extracted from import source */
 	prices?: Price[];
+	/** Commodity definitions (for `commodity` directives in beancount) */
+	commodities?: CommodityDefinition[];
+	/**
+	 * Raw beancount content to include as a supplementary file.
+	 * Escape hatch for constructs the Transaction type can't express.
+	 * Written as a separate file and included via `include` directive.
+	 */
+	supplementaryBeancount?: string;
 }
 
 export interface ImportError {

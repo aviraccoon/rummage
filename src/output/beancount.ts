@@ -7,6 +7,7 @@ import { writeFileSync } from "node:fs";
 import type {
 	Account,
 	BalanceAssertion,
+	CommodityDefinition,
 	Price,
 	Transaction,
 } from "../types.ts";
@@ -14,8 +15,8 @@ import type {
 /**
  * Format a number for beancount (2 decimal places).
  */
-function formatAmount(value: number): string {
-	return value.toFixed(2);
+function formatAmount(value: number, decimals = 2): string {
+	return value.toFixed(decimals);
 }
 
 /**
@@ -63,7 +64,13 @@ function collectAccountsFromTransactions(
 
 	for (const txn of transactions) {
 		accounts.add(txn.account);
-		accounts.add(txn.category ?? "Expenses:Uncategorized");
+		if (txn.commodity) {
+			accounts.add(txn.commodity.account);
+		} else if (txn.transfer) {
+			accounts.add(txn.transfer.toAccount);
+		} else {
+			accounts.add(txn.category ?? "Expenses:Uncategorized");
+		}
 	}
 
 	return accounts;
@@ -211,21 +218,25 @@ function generateTransaction(txn: Transaction): string[] {
 	// Metadata (after header, before postings)
 	lines.push(...generateMetadata(txn));
 
-	// Source account posting (the bank account)
+	// Source account posting (the bank account / cash side)
 	lines.push(
 		`  ${txn.account}  ${formatAmount(txn.amount.value)} ${txn.amount.currency}`,
 	);
 
-	// Handle transfer transactions (currency exchange, internal transfers)
-	if (txn.transfer) {
-		// Destination account with explicit amount and total cost (required for multi-currency)
-		// The @@ syntax tells beancount the total cost in the source currency
+	if (txn.commodity) {
+		// Commodity purchase/sale — counter posting with units at cost
+		const { account, units, symbol, costPerUnit } = txn.commodity;
+		lines.push(
+			`  ${account}  ${units} ${symbol} {${formatAmount(costPerUnit.value, 4)} ${costPerUnit.currency}}`,
+		);
+	} else if (txn.transfer) {
+		// Transfer — destination account with explicit amount and total cost
 		const sourceAmount = Math.abs(txn.amount.value);
 		lines.push(
 			`  ${txn.transfer.toAccount}  ${formatAmount(txn.transfer.toAmount.value)} ${txn.transfer.toAmount.currency} @@ ${formatAmount(sourceAmount)} ${txn.amount.currency}`,
 		);
 	} else {
-		// Normal transaction - counter posting with auto-balance
+		// Normal transaction — counter posting with auto-balance
 		const counterAccount = txn.category ?? "Expenses:Uncategorized";
 		lines.push(`  ${counterAccount}`);
 	}
@@ -237,7 +248,9 @@ function generateTransaction(txn: Transaction): string[] {
  * Generate a beancount balance assertion directive.
  */
 function generateBalanceDirective(assertion: BalanceAssertion): string {
-	const amount = formatAmount(assertion.balance.value);
+	// Use integer format for whole numbers (commodity units), 2 decimals for currency
+	const value = assertion.balance.value;
+	const amount = Number.isInteger(value) ? String(value) : formatAmount(value);
 	return `${assertion.date} balance ${assertion.account} ${amount} ${assertion.balance.currency}`;
 }
 
@@ -318,12 +331,32 @@ function deduplicateOpeningBalances(
 /**
  * Generate beancount file content.
  */
+/**
+ * Generate a commodity directive.
+ */
+function generateCommodityDirective(commodity: CommodityDefinition): string[] {
+	const lines: string[] = [];
+	lines.push(`${commodity.date} commodity ${commodity.symbol}`);
+	if (commodity.name) {
+		lines.push(`  name: "${commodity.name}"`);
+	}
+	if (commodity.isin) {
+		lines.push(`  isin: "${commodity.isin}"`);
+	}
+	return lines;
+}
+
+/**
+ * Generate beancount file content.
+ */
 export function generateBeancount(
 	transactions: Transaction[],
 	accounts: Account[],
 	balanceAssertions?: BalanceAssertion[],
 	prices?: Price[],
 	openingBalances?: BalanceAssertion[],
+	includes?: string[],
+	commodities?: CommodityDefinition[],
 ): string {
 	const lines: string[] = [];
 
@@ -333,6 +366,23 @@ export function generateBeancount(
 	lines.push("");
 	lines.push(`option "operating_currency" "CZK"`);
 	lines.push("");
+
+	// Include directives (for supplementary beancount files)
+	if (includes && includes.length > 0) {
+		for (const inc of includes) {
+			lines.push(`include "${inc}"`);
+		}
+		lines.push("");
+	}
+
+	// Commodity definitions
+	if (commodities && commodities.length > 0) {
+		lines.push("; Commodities");
+		for (const commodity of commodities) {
+			lines.push(...generateCommodityDirective(commodity));
+		}
+		lines.push("");
+	}
 
 	// Account definitions
 	lines.push("; Accounts");
@@ -406,6 +456,8 @@ export function writeBeancount(
 	balanceAssertions?: BalanceAssertion[],
 	prices?: Price[],
 	openingBalances?: BalanceAssertion[],
+	includes?: string[],
+	commodities?: CommodityDefinition[],
 ): void {
 	writeFileSync(
 		filePath,
@@ -415,6 +467,8 @@ export function writeBeancount(
 			balanceAssertions,
 			prices,
 			openingBalances,
+			includes,
+			commodities,
 		),
 	);
 }
