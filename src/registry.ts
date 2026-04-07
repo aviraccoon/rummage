@@ -42,6 +42,7 @@ export const importers: Importer[] = [
 		import: (dirPath, options) =>
 			importRevolutDirectory(dirPath, {
 				accountBase: options.accountBase ?? options.account,
+				categoryMapping: options.categoryMapping,
 			}),
 	},
 
@@ -225,6 +226,7 @@ export async function importAllSources(
 			...options,
 			account: config?.account ?? options.account,
 			accountBase: config?.accountBase ?? options.accountBase,
+			categoryMapping: config?.categoryMapping ?? options.categoryMapping,
 		};
 
 		// Run import (may be sync or async)

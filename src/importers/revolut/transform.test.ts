@@ -4,6 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type { RevolutTransaction } from "./api.ts";
 import {
+	DEFAULT_CATEGORY_MAP,
 	importRevolutDirectory,
 	importRevolutFile,
 	sanitizeCurrency,
@@ -36,6 +37,41 @@ function setupTestDir() {
 function cleanupTestDir() {
 	rmSync(TEST_DIR, { recursive: true, force: true });
 }
+
+describe("DEFAULT_CATEGORY_MAP", () => {
+	test("covers all known Revolut categories", () => {
+		const knownCategories = [
+			"groceries",
+			"restaurants",
+			"shopping",
+			"transport",
+			"entertainment",
+			"travel",
+			"health",
+			"services",
+			"utilities",
+			"transfers",
+			"cash",
+			"general",
+			"donation",
+			"salary",
+			"investment",
+			"topup",
+			"crypto",
+			"cashback",
+			"gift",
+		];
+		for (const cat of knownCategories) {
+			expect(DEFAULT_CATEGORY_MAP[cat]).toBeDefined();
+		}
+	});
+
+	test("all values are valid beancount account paths", () => {
+		for (const value of Object.values(DEFAULT_CATEGORY_MAP)) {
+			expect(value).toMatch(/^(Expenses|Income):/);
+		}
+	});
+});
 
 describe("sanitizeCurrency", () => {
 	test("passes through normal fiat currencies", () => {
@@ -197,6 +233,9 @@ describe("importRevolutFile", () => {
 				makeRevolutTxn({ category: "groceries", legId: "1" }),
 				makeRevolutTxn({ category: "restaurants", legId: "2" }),
 				makeRevolutTxn({ category: "transport", legId: "3" }),
+				makeRevolutTxn({ category: "donation", legId: "4" }),
+				makeRevolutTxn({ category: "salary", legId: "5" }),
+				makeRevolutTxn({ category: "investment", legId: "6" }),
 			]),
 		);
 
@@ -205,6 +244,78 @@ describe("importRevolutFile", () => {
 		expect(result.transactions[0]?.category).toBe("Expenses:Food:Groceries");
 		expect(result.transactions[1]?.category).toBe("Expenses:Food:Restaurants");
 		expect(result.transactions[2]?.category).toBe("Expenses:Transport");
+		expect(result.transactions[3]?.category).toBe("Expenses:Giving:Charity");
+		expect(result.transactions[4]?.category).toBe("Income:Salary");
+		expect(result.transactions[5]?.category).toBe(
+			"Expenses:Finance:Investments",
+		);
+
+		cleanupTestDir();
+	});
+
+	test("disables category mapping when categoryMapping is false", () => {
+		setupTestDir();
+		const filePath = join(TEST_DIR, "USD_2024.json");
+		writeFileSync(
+			filePath,
+			JSON.stringify([
+				makeRevolutTxn({ category: "groceries", legId: "1" }),
+				makeRevolutTxn({ category: "restaurants", legId: "2" }),
+			]),
+		);
+
+		const result = importRevolutFile(filePath, { categoryMapping: false });
+
+		expect(result.transactions[0]?.category).toBeUndefined();
+		expect(result.transactions[1]?.category).toBeUndefined();
+		// Raw category still in metadata
+		expect(
+			(result.transactions[0]?.metadata as Record<string, unknown>)
+				?.revolutCategory,
+		).toBe("groceries");
+
+		cleanupTestDir();
+	});
+
+	test("custom categoryMapping overrides defaults", () => {
+		setupTestDir();
+		const filePath = join(TEST_DIR, "USD_2024.json");
+		writeFileSync(
+			filePath,
+			JSON.stringify([
+				makeRevolutTxn({ category: "shopping", legId: "1" }),
+				makeRevolutTxn({ category: "groceries", legId: "2" }),
+			]),
+		);
+
+		const result = importRevolutFile(filePath, {
+			categoryMapping: {
+				shopping: "Expenses:Shopping:General",
+			},
+		});
+
+		// Overridden
+		expect(result.transactions[0]?.category).toBe("Expenses:Shopping:General");
+		// Default preserved
+		expect(result.transactions[1]?.category).toBe("Expenses:Food:Groceries");
+
+		cleanupTestDir();
+	});
+
+	test("categoryMapping with empty string suppresses a default", () => {
+		setupTestDir();
+		const filePath = join(TEST_DIR, "USD_2024.json");
+		writeFileSync(
+			filePath,
+			JSON.stringify([makeRevolutTxn({ category: "general", legId: "1" })]),
+		);
+
+		const result = importRevolutFile(filePath, {
+			categoryMapping: { general: "" },
+		});
+
+		// "general" suppressed — no category assigned
+		expect(result.transactions[0]?.category).toBeUndefined();
 
 		cleanupTestDir();
 	});

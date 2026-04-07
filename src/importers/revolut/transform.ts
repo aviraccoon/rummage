@@ -14,9 +14,42 @@ import type {
 } from "../../types.ts";
 import type { RevolutTransaction } from "./api.ts";
 
+/**
+ * Default mapping from Revolut categories to beancount account paths.
+ * Used when no custom categoryMapping is provided.
+ */
+export const DEFAULT_CATEGORY_MAP: Record<string, string> = {
+	groceries: "Expenses:Food:Groceries",
+	restaurants: "Expenses:Food:Restaurants",
+	shopping: "Expenses:Shopping",
+	transport: "Expenses:Transport",
+	entertainment: "Expenses:Entertainment",
+	travel: "Expenses:Transport:Travel",
+	health: "Expenses:Health",
+	services: "Expenses:Services",
+	utilities: "Expenses:Housing:Utilities",
+	transfers: "Expenses:Transfers",
+	cash: "Expenses:Transfers:Cash",
+	general: "Expenses:Uncategorized",
+	donation: "Expenses:Giving:Charity",
+	salary: "Income:Salary",
+	investment: "Expenses:Finance:Investments",
+	topup: "Expenses:Transfers:Topup",
+	crypto: "Expenses:Finance:Crypto",
+	cashback: "Income:Refunds",
+	gift: "Expenses:Giving:Gifts",
+};
+
 export interface RevolutImportOptions {
 	/** Base account path (default: "Assets:Revolut") */
 	accountBase?: string;
+	/**
+	 * Map Revolut categories to beancount account paths.
+	 * - omit or undefined: use DEFAULT_CATEGORY_MAP
+	 * - Record<string, string>: custom mapping (merged with defaults; use value "" to suppress a key)
+	 * - false: disable category mapping entirely (all categories come from rules)
+	 */
+	categoryMapping?: Record<string, string> | false;
 }
 
 /**
@@ -83,28 +116,34 @@ function buildLocation(
 }
 
 /**
- * Map Revolut category to a default expense category.
- * Users can override these with rules.
+ * Map Revolut category to a beancount account path.
+ * Uses the provided mapping, or undefined if mapping is false (disabled).
  */
-function mapCategory(category: string | undefined): string | undefined {
-	if (!category) return undefined;
+function mapCategory(
+	category: string | undefined,
+	mapping: Record<string, string> | false,
+): string | undefined {
+	if (!category || mapping === false) return undefined;
+	return mapping[category.toLowerCase()];
+}
 
-	const categoryMap: Record<string, string> = {
-		groceries: "Expenses:Food:Groceries",
-		restaurants: "Expenses:Food:Restaurants",
-		shopping: "Expenses:Shopping",
-		transport: "Expenses:Transport",
-		entertainment: "Expenses:Entertainment",
-		travel: "Expenses:Travel",
-		health: "Expenses:Health",
-		services: "Expenses:Services",
-		utilities: "Expenses:Utilities",
-		transfers: "Expenses:Transfers",
-		cash: "Expenses:Cash",
-		general: "Expenses:General",
-	};
-
-	return categoryMap[category.toLowerCase()];
+/**
+ * Resolve the categoryMapping option into the mapping to use.
+ * - undefined → DEFAULT_CATEGORY_MAP
+ * - false → false (disabled)
+ * - Record → merged with defaults (custom values override; empty string suppresses a key)
+ */
+function resolveCategoryMapping(
+	option: RevolutImportOptions["categoryMapping"],
+): Record<string, string> | false {
+	if (option === false) return false;
+	if (option === undefined) return DEFAULT_CATEGORY_MAP;
+	const merged = { ...DEFAULT_CATEGORY_MAP, ...option };
+	// Remove keys with empty string values (allows suppressing defaults)
+	for (const [key, value] of Object.entries(merged)) {
+		if (value === "") delete merged[key];
+	}
+	return merged;
 }
 
 /**
@@ -268,6 +307,7 @@ function importTransaction(
 	txn: RevolutTransaction,
 	accountBase: string,
 	source: string,
+	categoryMapping: Record<string, string> | false,
 ): Transaction {
 	const description = txn.merchant?.name ?? txn.description ?? "Unknown";
 	const currency = sanitizeCurrency(txn.currency);
@@ -284,7 +324,7 @@ function importTransaction(
 		description,
 		account: accountName,
 		source,
-		category: mapCategory(txn.category),
+		category: mapCategory(txn.category, categoryMapping),
 	};
 
 	// Handle exchange transactions - set up transfer to destination account
@@ -366,6 +406,7 @@ export function importRevolutFile(
 	const data = JSON.parse(content) as RevolutTransaction[];
 
 	const accountBase = options.accountBase ?? "Assets:Revolut";
+	const categoryMapping = resolveCategoryMapping(options.categoryMapping);
 
 	const transactions: Transaction[] = [];
 	const errors: ImportResult["errors"] = [];
@@ -387,7 +428,12 @@ export function importRevolutFile(
 				continue;
 			}
 
-			const transaction = importTransaction(txn, accountBase, filePath);
+			const transaction = importTransaction(
+				txn,
+				accountBase,
+				filePath,
+				categoryMapping,
+			);
 
 			// Mark pending transactions
 			if (txn.state === "PENDING") {
@@ -517,6 +563,7 @@ export function importRevolutDirectory(
 	);
 
 	const accountBase = options.accountBase ?? "Assets:Revolut";
+	const categoryMapping = resolveCategoryMapping(options.categoryMapping);
 
 	// First pass: collect all raw transactions from all files
 	const allRawTransactions: RevolutTransaction[] = [];
@@ -557,7 +604,12 @@ export function importRevolutDirectory(
 			seenIds.add(id);
 
 			try {
-				const transaction = importTransaction(txn, accountBase, filePath);
+				const transaction = importTransaction(
+					txn,
+					accountBase,
+					filePath,
+					categoryMapping,
+				);
 				if (txn.state === "PENDING") {
 					transaction.pending = true;
 				}
