@@ -85,9 +85,9 @@ export const rules: Rule<Category>[] = [
 		category: C.income.salary,
 	},
 
-	// Catch-all - anything unmatched
+	// Catch-all - assign uncategorized only if no importer-provided category
 	{
-		match: /.*/,
+		matchFn: (txn) => !txn.category,
 		category: C.uncategorized,
 	},
 ];

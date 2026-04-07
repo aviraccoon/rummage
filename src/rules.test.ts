@@ -354,15 +354,26 @@ describe("applyRules", () => {
 		expect(result[1]?.payee).toBe("Netflix");
 	});
 
-	test("skips already categorized transactions", () => {
+	test("rules override importer-provided categories", () => {
 		const rules: Rule[] = [{ match: /Spotify/, category: "Expenses:Music" }];
 		const transactions = [
-			makeTxn({ description: "Spotify", category: "Expenses:Override" }),
+			makeTxn({ description: "Spotify", category: "Expenses:General" }),
 		];
 
 		const result = applyRules(transactions, rules);
 
-		expect(result[0]?.category).toBe("Expenses:Override");
+		expect(result[0]?.category).toBe("Expenses:Music");
+	});
+
+	test("preserves existing category when no rule matches", () => {
+		const rules: Rule[] = [{ match: /Netflix/, category: "Expenses:Subs" }];
+		const transactions = [
+			makeTxn({ description: "Spotify", category: "Expenses:General" }),
+		];
+
+		const result = applyRules(transactions, rules);
+
+		expect(result[0]?.category).toBe("Expenses:General");
 	});
 
 	test("adds recurring tag when specified", () => {

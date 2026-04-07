@@ -71,15 +71,16 @@ export function ruleMatches(rule: Rule, txn: Transaction): boolean {
 	return true;
 }
 
-/** Apply rules to transactions, returning updated transactions */
+/**
+ * Apply rules to transactions, returning updated transactions.
+ * Rules override importer-provided categories (e.g., Revolut's built-in
+ * categories). If no rule matches, the existing category is preserved.
+ */
 export function applyRules(
 	transactions: Transaction[],
 	rules: Rule[],
 ): Transaction[] {
 	return transactions.map((txn) => {
-		// Skip if already categorized
-		if (txn.category) return txn;
-
 		// Find first matching rule
 		for (const rule of rules) {
 			if (ruleMatches(rule, txn)) {
