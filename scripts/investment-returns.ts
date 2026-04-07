@@ -15,6 +15,7 @@ import { execSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { DATA_PATH } from "../src/config.ts";
+import { InflationData } from "../src/lib/inflation.ts";
 
 const beancountFile =
 	process.argv[2] ?? join(DATA_PATH, "generated", "main.beancount");
@@ -232,7 +233,11 @@ function fmtDuration(years: number): string {
 	return `${y}y ${m}m`;
 }
 
-function printInvestment(data: InvestmentData): void {
+function printInvestment(
+	data: InvestmentData,
+	cpi?: InflationData | null,
+	deposits?: Deposit[],
+): void {
 	const c = data.currency;
 	const pad = 15;
 
@@ -294,56 +299,221 @@ function printInvestment(data: InvestmentData): void {
 			);
 		}
 	}
+
+	// Per-investment inflation-adjusted return
+	if (cpi && deposits && deposits.length > 0) {
+		const months = cpi.months("all");
+		const latestCPI = months[months.length - 1];
+		if (latestCPI) {
+			let realDeposited = 0;
+			for (const dep of deposits) {
+				const depYM = dep.date.slice(0, 7);
+				const deflated = cpi.deflate(dep.amount, depYM, latestCPI, "all");
+				realDeposited += deflated ?? dep.amount;
+			}
+			const currentValue = data.marketValue + data.cashBalance;
+			const realReturn = currentValue - realDeposited;
+			const realPct =
+				realDeposited > 0 ? (realReturn / realDeposited) * 100 : 0;
+			console.log(
+				`  Real return:      ${fmtAmt(realReturn, c).padStart(pad)}  (${fmtPct(realPct)} inflation-adjusted)`,
+			);
+		}
+	}
 }
+
+// ── Per-deposit data for DCA-aware inflation ──
+
+interface Deposit {
+	date: string; // YYYY-MM-DD
+	amount: number; // CZK value of this deposit
+}
+
+function getDepositHistory(inv: Investment): Deposit[] {
+	const deposits: Deposit[] = [];
+
+	// Unit purchases (cost basis per transaction)
+	const purchases = beanQuery(
+		`SELECT date, cost(position) WHERE account ~ '${inv.assetPattern}' AND account !~ ':Cash$' ORDER BY date`,
+	);
+	for (const line of purchases.split("\n")) {
+		const match = line.trim().match(/^(\d{4}-\d{2}-\d{2})\s+([-\d,.]+)\s+\S+/);
+		if (match?.[1] && match[2]) {
+			const amount = Number.parseFloat(match[2].replace(",", ""));
+			if (!Number.isNaN(amount) && amount > 0) {
+				deposits.push({ date: match[1], amount });
+			}
+		}
+	}
+
+	// Fees (same dates, separate amounts)
+	const fees = beanQuery(
+		`SELECT date, position WHERE account = 'Expenses:Finance:Investments:Fees' AND payee = '${inv.feePayee}' ORDER BY date`,
+	);
+	for (const line of fees.split("\n")) {
+		const match = line.trim().match(/^(\d{4}-\d{2}-\d{2})\s+([-\d,.]+)\s+\S+/);
+		if (match?.[1] && match[2]) {
+			const amount = Number.parseFloat(match[2].replace(",", ""));
+			if (!Number.isNaN(amount) && amount > 0) {
+				deposits.push({ date: match[1], amount });
+			}
+		}
+	}
+
+	// Note: we don't add cash inflows separately. The flow is:
+	// bank → Cash → (purchases + fees + rounding).
+	// Purchases and fees above already capture the money that entered.
+	// Remaining cash balance is small (rounding leftovers).
+
+	return deposits;
+}
+
+// ── Currency → country mapping for inflation lookup ──
+
+const CURRENCY_COUNTRY: Record<string, string> = {
+	CZK: "CZ",
+	EUR: "DE", // use Germany as EUR proxy
+	USD: "US",
+	GBP: "UK",
+	PLN: "PL",
+	HUF: "HU",
+	SEK: "SE",
+	NOK: "NO",
+	DKK: "DK",
+	CHF: "CH",
+};
 
 // ── Main ──
 
-const investments = discoverInvestments();
+async function main() {
+	const investments = discoverInvestments();
 
-if (investments.length === 0) {
-	console.log("No investment accounts found (Assets:Investments:*).");
-	process.exit(0);
+	if (investments.length === 0) {
+		console.log("No investment accounts found (Assets:Investments:*).");
+		process.exit(0);
+	}
+
+	const currency = detectCurrency();
+	console.log("Investment Returns Report");
+	console.log("As of latest available prices");
+
+	// Load inflation data for real return calculation
+	const country = CURRENCY_COUNTRY[currency];
+	let cpi: InflationData | null = null;
+	if (country) {
+		try {
+			cpi = await InflationData.load(country);
+		} catch {
+			// offline — skip inflation
+		}
+	}
+
+	let totalDeposited = 0;
+	let totalMarketValue = 0;
+	let totalCash = 0;
+	let totalFees = 0;
+	let earliestDate = "9999-99";
+	const allDeposits: Deposit[] = [];
+
+	for (const inv of investments) {
+		const data = getInvestmentData(inv);
+		const deposits = getDepositHistory(inv);
+		allDeposits.push(...deposits);
+		printInvestment(data, cpi, deposits);
+		totalDeposited += data.totalDeposited;
+		totalMarketValue += data.marketValue;
+		totalCash += data.cashBalance;
+		totalFees += data.fees;
+		if (data.firstDate < earliestDate) earliestDate = data.firstDate;
+	}
+
+	if (investments.length > 1) {
+		const combinedCurrent = totalMarketValue + totalCash;
+		const combinedReturn = combinedCurrent - totalDeposited;
+		const combinedPct =
+			totalDeposited > 0 ? (combinedReturn / totalDeposited) * 100 : 0;
+
+		console.log(`\n${"═".repeat(55)}`);
+		console.log("  Combined");
+		console.log(`${"═".repeat(55)}`);
+		console.log(
+			`  Deposited:        ${fmtAmt(totalDeposited, currency).padStart(15)}`,
+		);
+		console.log(
+			`  Total fees:       ${fmtAmt(totalFees, currency).padStart(15)}`,
+		);
+		console.log(
+			`  Current value:    ${fmtAmt(combinedCurrent, currency).padStart(15)}`,
+		);
+		console.log(
+			`  Total return:     ${fmtAmt(combinedReturn, currency).padStart(15)}  (${fmtPct(combinedPct)} on deposits)`,
+		);
+	}
+
+	// ── Inflation-adjusted view (DCA-aware) ──
+
+	if (cpi) {
+		try {
+			const months = cpi.months("all");
+			const latestCPI = months[months.length - 1];
+
+			if (latestCPI) {
+				if (allDeposits.length > 0) {
+					// Deflate each deposit from its own date to today
+					let realDeposited = 0;
+					let deflatedCount = 0;
+
+					for (const dep of allDeposits) {
+						const depYM = dep.date.slice(0, 7); // "2021-02" from "2021-02-25"
+						const deflated = cpi.deflate(dep.amount, depYM, latestCPI, "all");
+						if (deflated !== undefined) {
+							realDeposited += deflated;
+							deflatedCount++;
+						} else {
+							// CPI data missing for this month — use nominal as fallback
+							realDeposited += dep.amount;
+						}
+					}
+
+					const combinedCurrent = totalMarketValue + totalCash;
+					const realReturn = combinedCurrent - realDeposited;
+					const realPct =
+						realDeposited > 0 ? (realReturn / realDeposited) * 100 : 0;
+					const overallInflation = cpi.cumulativeInflation(
+						earliestDate.slice(0, 7),
+						latestCPI,
+						"all",
+					);
+
+					console.log(`\n${"─".repeat(55)}`);
+					console.log(
+						`  Inflation-adjusted (${deflatedCount} deposits, CPI through ${latestCPI})`,
+					);
+					console.log(`${"─".repeat(55)}`);
+					console.log(
+						`  Deposits in today's ${currency}: ${fmtAmt(realDeposited, currency).padStart(10)}`,
+					);
+					console.log(
+						`  Real return:        ${fmtAmt(realReturn, currency).padStart(15)}  (${fmtPct(realPct)})`,
+					);
+					if (overallInflation !== undefined) {
+						console.log(
+							`  CPI ${earliestDate.slice(0, 7)} → ${latestCPI}: ${(overallInflation * 100).toFixed(0)}% (but each deposit adjusted from its own date)`,
+						);
+					}
+					if (realReturn < 0) {
+						console.log(
+							`  Your money lost purchasing power — inflation ate more than the fund gained.`,
+						);
+					}
+				}
+			}
+		} catch {
+			// Inflation data unavailable — skip section silently
+		}
+	}
+
+	console.log();
 }
 
-const currency = detectCurrency();
-console.log("Investment Returns Report");
-console.log("As of latest available prices");
-
-let totalDeposited = 0;
-let totalMarketValue = 0;
-let totalCash = 0;
-let totalFees = 0;
-
-for (const inv of investments) {
-	const data = getInvestmentData(inv);
-	printInvestment(data);
-	totalDeposited += data.totalDeposited;
-	totalMarketValue += data.marketValue;
-	totalCash += data.cashBalance;
-	totalFees += data.fees;
-}
-
-if (investments.length > 1) {
-	const combinedCurrent = totalMarketValue + totalCash;
-	const combinedReturn = combinedCurrent - totalDeposited;
-	const combinedPct =
-		totalDeposited > 0 ? (combinedReturn / totalDeposited) * 100 : 0;
-
-	console.log(`\n${"═".repeat(55)}`);
-	console.log("  Combined");
-	console.log(`${"═".repeat(55)}`);
-	console.log(
-		`  Deposited:        ${fmtAmt(totalDeposited, currency).padStart(15)}`,
-	);
-	console.log(
-		`  Total fees:       ${fmtAmt(totalFees, currency).padStart(15)}`,
-	);
-	console.log(
-		`  Current value:    ${fmtAmt(combinedCurrent, currency).padStart(15)}`,
-	);
-	console.log(
-		`  Total return:     ${fmtAmt(combinedReturn, currency).padStart(15)}  (${fmtPct(combinedPct)} on deposits)`,
-	);
-}
-
-console.log();
+main();
