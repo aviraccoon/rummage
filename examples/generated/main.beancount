@@ -14,8 +14,6 @@ option "operating_currency" "CZK"
 2024-12-28 open Assets:Revolut:USD
 2024-12-28 open Equity:Opening-Balances
 2024-12-28 open Expenses:Bank:Fees
-2024-12-28 open Expenses:Cash
-2024-12-28 open Expenses:Entertainment
 2024-12-28 open Expenses:Entertainment:Games
 2024-12-28 open Expenses:Food:Coffee
 2024-12-28 open Expenses:Food:Delivery
@@ -27,9 +25,10 @@ option "operating_currency" "CZK"
 2024-12-28 open Expenses:Subscriptions:Netflix
 2024-12-28 open Expenses:Subscriptions:Spotify
 2024-12-28 open Expenses:Transfers
+2024-12-28 open Expenses:Transfers:Cash
 2024-12-28 open Expenses:Transport
 2024-12-28 open Expenses:Transport:Public
-2024-12-28 open Expenses:Travel
+2024-12-28 open Expenses:Transport:Travel
 2024-12-28 open Expenses:Uncategorized
 2024-12-28 open Income:Other
 2024-12-28 open Income:Salary
@@ -65,7 +64,7 @@ option "operating_currency" "CZK"
   revolut-category: "cash"
   country-code: "CZ"
   Assets:Revolut:CZK  -5000.00 CZK
-  Expenses:Cash
+  Expenses:Transfers:Cash
 
 2024-12-29 * "To Jane Doe" #transfer
   id: "revolut-d4e5f6a7-4444-5555-0000-777788889999"
@@ -195,7 +194,7 @@ option "operating_currency" "CZK"
   merchant-address: "Herengracht 597, Amsterdam"
   country-code: "NL"
   Assets:Revolut:EUR  -25.00 EUR
-  Expenses:Travel
+  Expenses:Transport:Travel
 
 2025-01-01 * "Albert Hypermarket"
   id: "revolut-c9d0e1f2-9999-0000-0000-222233334444"
@@ -213,7 +212,7 @@ option "operating_currency" "CZK"
   Assets:Revolut:CZK  -459.00 CZK
   Expenses:Food:Groceries
 
-2025-01-01 * "Netflix"
+2025-01-01 * "Netflix" "Netflix" #recurring #monthly
   id: "revolut-a1b2c3d4-1111-2222-0000-444455556666"
   source: "USD_2025.json"
   revolut-type: "CARD_PAYMENT"
@@ -227,7 +226,7 @@ option "operating_currency" "CZK"
   merchant-address: "100 Winchester Circle, Los Gatos, CA"
   country-code: "US"
   Assets:Revolut:USD  -15.99 USD
-  Expenses:Entertainment
+  Expenses:Subscriptions:Netflix
 
 2025-01-02 ! "Pending Coffee Shop"
   id: "revolut-e5f6a7b8-5555-6666-0000-888899990000"
@@ -264,7 +263,7 @@ option "operating_currency" "CZK"
   Assets:Bank:Checking  -2515.00 CZK
   Expenses:Subscriptions:Discord
 
-2025-03-12 * "Food Delivery" "Nakup: BOLT FOOD, Prague, CZ, dne 12.3.2025, castka 450.00 CZK"
+2025-03-12 * "Bolt Food" "Nakup: BOLT FOOD, Prague, CZ, dne 12.3.2025, castka 450.00 CZK"
   id: "fio-1234567890-30004"
   source: "2025-03.ofx"
   ofx-type: "POS"
@@ -304,7 +303,7 @@ option "operating_currency" "CZK"
   Assets:Bank:Checking  -1500.00 CZK
   Expenses:Entertainment:Games
 
-2025-03-25 * "Food Delivery" "Nakup: DODO PIZZA, Prague, CZ, dne 25.3.2025, castka 420.00 CZK"
+2025-03-25 * "Dodo" "Nakup: DODO PIZZA, Prague, CZ, dne 25.3.2025, castka 420.00 CZK"
   id: "fio-1234567890-30009"
   source: "2025-03.ofx"
   ofx-type: "POS"
@@ -355,7 +354,7 @@ option "operating_currency" "CZK"
   Assets:Bank:Checking  -520.00 CZK
   Expenses:Food:Groceries
 
-2025-10-12 * "Food Delivery" "Nakup: WOLT, Prague, CZ, dne 12.10.2025, castka 380.00 CZK"
+2025-10-12 * "Wolt" "Nakup: WOLT, Prague, CZ, dne 12.10.2025, castka 380.00 CZK"
   id: "fio-1234567890-20004"
   source: "2025-10.ofx"
   ofx-type: "POS"
@@ -454,7 +453,7 @@ option "operating_currency" "CZK"
   Assets:OtherBank:EUR  -45.99 EUR
   Expenses:Shopping
 
-2025-12-12 * "Food Delivery" "Nakup: BOLT FOOD, Prague, CZ, dne 12.12.2025, castka 450.00 CZK"
+2025-12-12 * "Bolt Food" "Nakup: BOLT FOOD, Prague, CZ, dne 12.12.2025, castka 450.00 CZK"
   id: "fio-1234567890-10005"
   source: "2025-12.ofx"
   ofx-type: "POS"
@@ -519,6 +518,6 @@ option "operating_currency" "CZK"
 
 
 ; Balance Assertions
-2025-01-02 balance Assets:Revolut:EUR 100.00 EUR
-2025-01-02 balance Assets:Revolut:CZK 3750.00 CZK
-2025-01-02 balance Assets:Revolut:USD 500.00 USD
+2025-01-02 balance Assets:Revolut:EUR 100 EUR
+2025-01-02 balance Assets:Revolut:CZK 3750 CZK
+2025-01-02 balance Assets:Revolut:USD 500 USD

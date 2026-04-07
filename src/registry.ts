@@ -10,6 +10,7 @@
 
 import { existsSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
+import { importAmundiDirectory } from "./importers/amundi/transform.ts";
 import { importConseqDirectory } from "./importers/conseq/transform.ts";
 import { importFioDirectory } from "./importers/fio/transform.ts";
 import { importManualDirectory } from "./importers/manual.ts";
@@ -28,6 +29,11 @@ import type { BalanceAssertion, ImportResult } from "./types.ts";
  */
 export const importers: Importer[] = [
 	// Bank-specific importers (matched by directory name)
+	{
+		name: "amundi",
+		directoryMatch: "amundi",
+		import: (dirPath) => importAmundiDirectory(dirPath),
+	},
 	{
 		name: "conseq",
 		directoryMatch: "conseq",
@@ -277,6 +283,8 @@ export async function importAllSources(
 			balanceAssertions: result.balanceAssertions,
 			openingBalances,
 			prices: result.prices,
+			commodities: result.commodities,
+			supplementaryBeancount: result.supplementaryBeancount,
 		});
 	}
 
