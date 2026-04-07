@@ -14,11 +14,38 @@
 import { execSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
+import { parseArgs } from "node:util";
 import { DATA_PATH } from "../src/config.ts";
 import { InflationData } from "../src/lib/inflation.ts";
 
+const { values: flags, positionals } = parseArgs({
+	args: process.argv.slice(2),
+	options: {
+		"savings-rate": { type: "string" },
+		help: { type: "boolean", short: "h", default: false },
+	},
+	allowPositionals: true,
+	strict: true,
+});
+
+if (flags.help) {
+	console.log(`Usage: bun scripts/investment-returns.ts [options] [beancount-file]
+
+Shows true total return including acquisition costs, inflation-adjusted.
+
+Options:
+  --savings-rate <pct>  Compare against a savings account at this annual rate
+                        (e.g. --savings-rate 4.5 for 4.5%/year)
+  -h, --help            Show this help`);
+	process.exit(0);
+}
+
+const SAVINGS_RATE = flags["savings-rate"]
+	? Number.parseFloat(flags["savings-rate"])
+	: undefined;
+
 const beancountFile =
-	process.argv[2] ?? join(DATA_PATH, "generated", "main.beancount");
+	positionals[0] ?? join(DATA_PATH, "generated", "main.beancount");
 
 if (!existsSync(beancountFile)) {
 	console.error(`File not found: ${beancountFile}`);
@@ -368,6 +395,23 @@ function getDepositHistory(inv: Investment): Deposit[] {
 	return deposits;
 }
 
+// ── Opportunity cost: what if you'd used a savings account instead? ──
+
+/**
+ * Compute what deposits would be worth today at a fixed annual interest rate.
+ * Each deposit compounds from its own date to today.
+ */
+function savingsAccountValue(deposits: Deposit[], annualRate: number): number {
+	const now = Date.now();
+	let total = 0;
+	for (const dep of deposits) {
+		const years =
+			(now - new Date(dep.date).getTime()) / (1000 * 60 * 60 * 24 * 365.25);
+		total += dep.amount * (1 + annualRate / 100) ** years;
+	}
+	return total;
+}
+
 // ── Currency → country mapping for inflation lookup ──
 
 const CURRENCY_COUNTRY: Record<string, string> = {
@@ -511,6 +555,27 @@ async function main() {
 		} catch {
 			// Inflation data unavailable — skip section silently
 		}
+	}
+
+	// ── Opportunity cost comparison ──
+
+	if (SAVINGS_RATE !== undefined && allDeposits.length > 0) {
+		const savingsValue = savingsAccountValue(allDeposits, SAVINGS_RATE);
+		const combinedCurrent = totalMarketValue + totalCash;
+		const difference = combinedCurrent - savingsValue;
+
+		console.log(`\n${"─".repeat(55)}`);
+		console.log(`  What if: savings account at ${SAVINGS_RATE}%/year`);
+		console.log(`${"─".repeat(55)}`);
+		console.log(
+			`  Savings would be:  ${fmtAmt(savingsValue, currency).padStart(12)}`,
+		);
+		console.log(
+			`  You have:          ${fmtAmt(combinedCurrent, currency).padStart(12)}`,
+		);
+		console.log(
+			`  Difference:        ${fmtAmt(difference, currency).padStart(12)}  (${difference >= 0 ? "funds beat savings" : "savings would have been better"})`,
+		);
 	}
 
 	console.log();
