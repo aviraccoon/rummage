@@ -103,14 +103,6 @@ async function main() {
 	console.log(`\n📋 Applying ${rules.length} categorization rules`);
 	allTransactions = applyRules(allTransactions, rules);
 
-	// Count uncategorized
-	const uncategorized = allTransactions.filter(
-		(t) => t.category === "Expenses:Uncategorized",
-	);
-	if (uncategorized.length > 0) {
-		console.log(`   ⚠️  ${uncategorized.length} uncategorized transactions`);
-	}
-
 	// Load and apply overrides
 	const sourceFiles = getAllSourceFiles(config.rawPath);
 	const overrides = await loadAllOverrides(DATA_PATH, sourceFiles);
@@ -138,6 +130,14 @@ async function main() {
 				);
 			}
 		}
+	}
+
+	// Count uncategorized (after rules + overrides)
+	const uncategorized = allTransactions.filter(
+		(t) => t.category === "Expenses:Uncategorized",
+	);
+	if (uncategorized.length > 0) {
+		console.log(`\n   ⚠️  ${uncategorized.length} uncategorized transactions`);
 	}
 
 	// Ensure generated directory exists
