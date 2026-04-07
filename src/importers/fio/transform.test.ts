@@ -256,6 +256,55 @@ describe("importFioJson", () => {
 		cleanupTestDir();
 	});
 
+	test("extracts payee from card transaction description", () => {
+		setupTestDir();
+		const filePath = join(TEST_DIR, "test.json");
+		writeFileSync(
+			filePath,
+			JSON.stringify(
+				makeStatement([
+					makeFioTxn({
+						column7: {
+							value:
+								"N\u00e1kup: COSTA DBK,  BUDEJOVICKA 1667/64, PRAHA 4, 140 00, CZE, dne 29.12.2017, \u010d\u00e1stka  99.00 CZK",
+							name: "U\u017eivatelsk\u00e1 identifikace",
+							id: 7,
+						},
+					}),
+				]),
+			),
+		);
+
+		const result = importFioJson(filePath);
+		expect(result.transactions[0]?.payee).toBe("COSTA DBK");
+
+		cleanupTestDir();
+	});
+
+	test("does not extract payee from non-card transactions", () => {
+		setupTestDir();
+		const filePath = join(TEST_DIR, "test.json");
+		writeFileSync(
+			filePath,
+			JSON.stringify(
+				makeStatement([
+					makeFioTxn({
+						column7: {
+							value: "Monthly rent payment",
+							name: "U\u017eivatelsk\u00e1 identifikace",
+							id: 7,
+						},
+					}),
+				]),
+			),
+		);
+
+		const result = importFioJson(filePath);
+		expect(result.transactions[0]?.payee).toBeUndefined();
+
+		cleanupTestDir();
+	});
+
 	test("handles empty transaction list", () => {
 		setupTestDir();
 		const filePath = join(TEST_DIR, "empty.json");

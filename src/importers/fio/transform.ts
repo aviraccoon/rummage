@@ -138,6 +138,14 @@ function importTransaction(
 		result.rawMemo = txn.column16.value;
 	}
 
+	// Extract merchant name from card transactions: "Nákup: MERCHANT, address..."
+	const cardMatch = result.description.match(
+		/^(?:Nákup|Výběr z bankomatu|Kredit): ([^,]+)/,
+	);
+	if (cardMatch) {
+		result.payee = cardMatch[1]?.trim();
+	}
+
 	// Store rich metadata including Czech payment symbols
 	result.metadata = {
 		fioId: txn.column22.value,
