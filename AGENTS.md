@@ -11,6 +11,11 @@ bun test         # run tests
 bun run lint:fix # auto-fix formatting
 ```
 
+### Diagnostic Scripts
+
+- `bun scripts/category-hygiene.ts` - find transactions in parent categories that need subcategorization
+- `bun scripts/init.ts [dir]` - scaffold a new data directory
+
 ## Key Paths
 
 - `src/importers/` - bank and format importers
