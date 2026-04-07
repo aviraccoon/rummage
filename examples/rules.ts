@@ -1,8 +1,9 @@
 /**
  * Example categorization rules.
- * Copy to data/rules.ts and customize with your patterns.
+ * Copy to your data directory and customize with your patterns.
  */
 
+import { categorize } from "../src/rules.helpers.ts";
 import type { Rule } from "../src/types.ts";
 import { C, type Category } from "./categories.ts";
 
@@ -34,25 +35,26 @@ export const rules: Rule<Category>[] = [
 		category: C.entertainment.games,
 	},
 
-	// Transport
+	// Transport — match accepts an array of patterns (any match = pass)
 	{
-		match: /OVPAY|OV-CHIPKAART/i,
+		match: [/OVPAY/i, /OV-CHIPKAART/i],
 		payee: "OV Public Transport",
 		category: C.transport.public,
 	},
 
-	// Food
+	// Food — use categorize() helper to reduce boilerplate
+	// when many patterns share a category
+	...categorize(C.food.delivery, [
+		[/BOLT.*FOOD/i, "Bolt Food"],
+		[/WOLT/i, "Wolt"],
+		[/DODO/i, "Dodo"],
+	]),
 	{
-		match: /BOLT.*FOOD|WOLT|DODO/i,
-		payee: "Food Delivery",
-		category: C.food.delivery,
-	},
-	{
-		match: /ALBERT|BILLA|TESCO|LIDL|ROHLIK/i,
+		match: [/ALBERT/i, /BILLA/i, /TESCO/i, /LIDL/i, /ROHLIK/i],
 		category: C.food.groceries,
 	},
 	{
-		match: /STARBUCKS|COSTA COFFEE/i,
+		match: [/STARBUCKS/i, /COSTA COFFEE/i],
 		payee: "Coffee Shop",
 		category: C.food.coffee,
 	},

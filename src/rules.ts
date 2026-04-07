@@ -8,10 +8,14 @@ import type { Rule, Transaction } from "./types.ts";
 export function ruleMatches(rule: Rule, txn: Transaction): boolean {
 	// match: checks name OR memo (either match = pass)
 	if (rule.match) {
-		const nameMatch = txn.rawName && rule.match.test(txn.rawName);
-		const memoMatch = txn.rawMemo && rule.match.test(txn.rawMemo);
-		const descMatch = rule.match.test(txn.description);
-		if (!nameMatch && !memoMatch && !descMatch) {
+		const patterns = Array.isArray(rule.match) ? rule.match : [rule.match];
+		const matched = patterns.some(
+			(pattern) =>
+				(txn.rawName && pattern.test(txn.rawName)) ||
+				(txn.rawMemo && pattern.test(txn.rawMemo)) ||
+				pattern.test(txn.description),
+		);
+		if (!matched) {
 			return false;
 		}
 	}

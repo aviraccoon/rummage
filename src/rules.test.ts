@@ -49,6 +49,31 @@ describe("ruleMatches", () => {
 
 			expect(ruleMatches(rule, txn)).toBe(false);
 		});
+
+		test("matches with array of patterns", () => {
+			const rule: Rule = {
+				match: [/Netflix/i, /Spotify/i, /Disney/i],
+				category: "Expenses:Subs",
+			};
+
+			expect(ruleMatches(rule, makeTxn({ description: "Netflix" }))).toBe(true);
+			expect(ruleMatches(rule, makeTxn({ description: "Spotify" }))).toBe(true);
+			expect(ruleMatches(rule, makeTxn({ description: "HBO" }))).toBe(false);
+		});
+
+		test("matches array pattern against rawName and rawMemo", () => {
+			const rule: Rule = {
+				match: [/Netflix/i, /Spotify/i],
+				category: "Expenses:Subs",
+			};
+
+			expect(ruleMatches(rule, makeTxn({ rawName: "SPOTIFY PREMIUM" }))).toBe(
+				true,
+			);
+			expect(
+				ruleMatches(rule, makeTxn({ rawMemo: "Netflix subscription" })),
+			).toBe(true);
+		});
 	});
 
 	describe("matchName", () => {

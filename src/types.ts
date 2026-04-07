@@ -103,8 +103,8 @@ export interface Price {
 }
 
 export interface Rule<C extends string = string> {
-	/** Regex pattern to match against name OR memo (either matches = pass) */
-	match?: RegExp;
+	/** Regex pattern(s) to match against name OR memo (either matches = pass) */
+	match?: RegExp | RegExp[];
 	/** Regex pattern to match only against raw name field */
 	matchName?: RegExp;
 	/** Regex pattern to match only against raw memo field */
